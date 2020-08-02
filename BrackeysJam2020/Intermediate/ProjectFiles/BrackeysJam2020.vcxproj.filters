@@ -1,0 +1,45 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <None Include="..\..\BrackeysJam2020.uproject" />
+    <Filter Include="Source">
+      <UniqueIdentifier>{6E84DF7B-925C-4202-BA63-02550DD85E6B}</UniqueIdentifier>
+    </Filter>
+    <None Include="..\..\Source\BrackeysJam2020.Target.cs">
+      <Filter>Source</Filter>
+    </None>
+    <None Include="..\..\Source\BrackeysJam2020Editor.Target.cs">
+      <Filter>Source</Filter>
+    </None>
+    <Filter Include="Config">
+      <UniqueIdentifier>{311550FA-E905-4333-B154-682DA30D8E7A}</UniqueIdentifier>
+    </Filter>
+    <None Include="..\..\Config\DefaultEditor.ini">
+      <Filter>Config</Filter>
+    </None>
+    <None Include="..\..\Config\DefaultEngine.ini">
+      <Filter>Config</Filter>
+    </None>
+    <None Include="..\..\Config\DefaultGame.ini">
+      <Filter>Config</Filter>
+    </None>
+    <Filter Include="Source\BrackeysJam2020">
+      <UniqueIdentifier>{1A27F8C4-E5EF-4DB7-A21B-4346A401A030}</UniqueIdentifier>
+    </Filter>
+    <None Include="..\..\Source\BrackeysJam2020\BrackeysJam2020.Build.cs">
+      <Filter>Source\BrackeysJam2020</Filter>
+    </None>
+    <ClCompile Include="..\..\Source\BrackeysJam2020\BrackeysJam2020.cpp">
+      <Filter>Source\BrackeysJam2020</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\Source\BrackeysJam2020\BrackeysJam2020.h">
+      <Filter>Source\BrackeysJam2020</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\Source\BrackeysJam2020\BrackeysJam2020GameModeBase.cpp">
+      <Filter>Source\BrackeysJam2020</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\Source\BrackeysJam2020\BrackeysJam2020GameModeBase.h">
+      <Filter>Source\BrackeysJam2020</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

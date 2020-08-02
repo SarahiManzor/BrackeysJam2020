@@ -1,0 +1,2 @@
+C:\Users\Manzor\Documents\Unreal Projects\BrackeysJam2020\BrackeysJam2020\Intermediate\Build\Win64\UE4Editor\Development\BrackeysJam2020\Definitions.BrackeysJam2020.h
+c:\users\manzor\documents\unreal projects\brackeysjam2020\brackeysjam2020\source\brackeysjam2020\BrackeysJam2020.h
