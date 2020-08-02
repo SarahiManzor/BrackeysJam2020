@@ -38,4 +38,7 @@ private:
 public:
 	void SetTrackingSource(EControllerHand Hand);
 
+	virtual void Grab();
+	virtual void Release();
+
 };

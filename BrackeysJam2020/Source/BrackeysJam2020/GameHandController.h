@@ -34,12 +34,17 @@ private:
 
 	// References
 	AActor* HeldActor;
+	UPrimitiveComponent* HeldComponent;
+
 	AActor* OverlappedActor;
+	UPrimitiveComponent* OverlappedComponent;
 
 	// State
 
 // ----------Custom Functions----------
 public:
+	virtual void Grab() override;
+	virtual void Release() override;
 protected:
 private:
 	UFUNCTION()

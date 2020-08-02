@@ -3,6 +3,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Engine/World.h"
 #include "HandControllerBase.h"
+#include "Components/InputComponent.h" 
 
 AVRPawn::AVRPawn()
 {
@@ -46,4 +47,30 @@ void AVRPawn::Tick(float DeltaTime)
 void AVRPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
+
+	PlayerInputComponent->BindAction(TEXT("LeftGrab"), IE_Pressed, this, &AVRPawn::GrabButtonPressedLeft);
+	PlayerInputComponent->BindAction(TEXT("LeftGrab"), IE_Released, this, &AVRPawn::GrabButtonReleasedLeft);
+
+	PlayerInputComponent->BindAction(TEXT("RightGrab"), IE_Pressed, this, &AVRPawn::GrabButtonPressedRight);
+	PlayerInputComponent->BindAction(TEXT("RightGrab"), IE_Released, this, &AVRPawn::GrabButtonReleasedRight);
+}
+
+void AVRPawn::GrabButtonPressedLeft()
+{
+	LeftHandController->Grab();
+}
+
+void AVRPawn::GrabButtonReleasedLeft()
+{
+	LeftHandController->Release();
+}
+
+void AVRPawn::GrabButtonPressedRight()
+{
+	RightHandController->Grab();
+}
+
+void AVRPawn::GrabButtonReleasedRight()
+{
+	RightHandController->Release();
 }

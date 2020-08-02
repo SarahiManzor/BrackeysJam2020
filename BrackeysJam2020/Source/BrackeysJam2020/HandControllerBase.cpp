@@ -37,3 +37,13 @@ void AHandControllerBase::SetTrackingSource(EControllerHand Hand)
 	}
 }
 
+void AHandControllerBase::Grab()
+{
+
+}
+
+void AHandControllerBase::Release()
+{
+
+}
+

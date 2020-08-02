@@ -54,5 +54,10 @@ private:
 public:
 protected:
 private:
+	void GrabButtonPressedLeft();
+	void GrabButtonReleasedLeft();
+
+	void GrabButtonPressedRight();
+	void GrabButtonReleasedRight();
 
 };
