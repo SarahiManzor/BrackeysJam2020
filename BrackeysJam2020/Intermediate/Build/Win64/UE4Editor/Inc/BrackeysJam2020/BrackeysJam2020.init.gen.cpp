@@ -21,8 +21,8 @@ void EmptyLinkFunctionForGeneratedCodeBrackeysJam2020_init() {}
 				nullptr,
 				0,
 				PKG_CompiledIn | 0x00000000,
-				0x1E624C4A,
-				0x70573068,
+				0x014532D9,
+				0x9D2DED55,
 				METADATA_PARAMS(nullptr, 0)
 			};
 			UE4CodeGen_Private::ConstructUPackage(ReturnPackage, PackageParams);

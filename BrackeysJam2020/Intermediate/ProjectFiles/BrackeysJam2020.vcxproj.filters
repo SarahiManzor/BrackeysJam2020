@@ -42,4 +42,26 @@
       <Filter>Source\BrackeysJam2020</Filter>
     </ClInclude>
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\Source\BrackeysJam2020\VRPawn.h">
+      <Filter>Source\BrackeysJam2020</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\BrackeysJam2020\HandControllerBase.h">
+      <Filter>Source\BrackeysJam2020</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\BrackeysJam2020\GameHandController.h">
+      <Filter>Source\BrackeysJam2020</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\Source\BrackeysJam2020\VRPawn.cpp">
+      <Filter>Source\BrackeysJam2020</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\BrackeysJam2020\HandControllerBase.cpp">
+      <Filter>Source\BrackeysJam2020</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\BrackeysJam2020\GameHandController.cpp">
+      <Filter>Source\BrackeysJam2020</Filter>
+    </ClCompile>
+  </ItemGroup>
 </Project>
