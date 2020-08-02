@@ -1,3 +1,0 @@
-C:\Users\Manzor\Documents\Unreal Projects\BrackeysJam2020\BrackeysJam2020\Intermediate\Build\Win64\UE4Editor\Development\BrackeysJam2020\Definitions.BrackeysJam2020.h
-C:\Program Files\Epic Games\UE_4.24\Engine\Source\Runtime\CoreUObject\Public\UObject/GeneratedCppIncludes.h
-C:\Program Files\Epic Games\UE_4.24\Engine\Source\Runtime\CoreUObject\Public\UObject/MetaData.h
