@@ -8,6 +8,8 @@
 
 class AHandControllerBase;
 class UCameraComponent;
+class USplineMeshComponent;
+class USplineComponent;
 
 UCLASS()
 class BRACKEYSJAM2020_API AVRPawn : public APawn
@@ -32,25 +34,52 @@ protected:
 private:
 	// Config
 	UPROPERTY(EditDefaultsOnly)
-		TSubclassOf<AHandControllerBase> RightHandControllerClass;
+	TSubclassOf<AHandControllerBase> RightHandControllerClass;
 
 	UPROPERTY(EditDefaultsOnly)
-		TSubclassOf<AHandControllerBase> LeftHandControllerClass;
+	TSubclassOf<AHandControllerBase> LeftHandControllerClass;
+
+	UPROPERTY(EditAnywhere)
+	float TeleportRangeVelocity;
+
+	UPROPERTY(EditAnywhere)
+	float PlayerHeight;
 
 	// Components
 	UPROPERTY(VisibleAnywhere)
-		UCameraComponent* Camera;
+	USceneComponent* Root;
+
+	UPROPERTY(VisibleAnywhere)
+	UCameraComponent* Camera;
+
+	UPROPERTY(VisibleAnywhere)
+	UStaticMeshComponent* DestinationMarker;
+
+	UPROPERTY()
+	TArray<USplineMeshComponent*> TeleportPathComponents;
+
+	UPROPERTY(EditDefaultsOnly)
+	UMaterialInterface* TeleportPathMaterial;
+
+	UPROPERTY(EditDefaultsOnly)
+	UStaticMesh* TeleportPathMesh;
+
+	UPROPERTY(VisibleAnywhere)
+	USplineComponent* TeleportPath;
 
 	// References
 	UPROPERTY()
-		AHandControllerBase* RightHandController;
+	AHandControllerBase* RightHandController;
 
 	UPROPERTY()
-		AHandControllerBase* LeftHandController;
+	AHandControllerBase* LeftHandController;
+
+	AHandControllerBase* TeleportingHand; // Hand currently teleporting
 
 	// State
+	bool bSelectingTeleport;
 
-// ----------Custom Functions----------
+	// ----------Custom Functions----------
 public:
 protected:
 private:
@@ -60,4 +89,16 @@ private:
 	void GrabButtonPressedRight();
 	void GrabButtonReleasedRight();
 
+	void TeleportButtonPressedLeft();
+	void TeleportButtonReleasedLeft();
+
+	void TeleportButtonPressedRight();
+	void TeleportButtonReleasedRight();
+
+	void UpdateTeleportMarker();
+
+	void StartTeleport();
+	void EndTeleport();
+
+	void HideTeleportMesh();
 };

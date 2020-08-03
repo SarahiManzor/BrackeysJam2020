@@ -24,7 +24,6 @@ public:
 
 	// ----------Variables----------
 public:
-protected:
 	// Components
 	UPROPERTY(VisibleAnywhere)
 	UMotionControllerComponent* MotionController;
@@ -32,6 +31,7 @@ protected:
 	UPROPERTY(VisibleAnywhere)
 	UStaticMeshComponent* ControllerMesh;
 
+protected:
 private:
 
 	// ----------Custom Functions----------
