@@ -30,6 +30,8 @@ private:
 	// Config
 
 	// Components
+	UPROPERTY(VisibleAnywhere)
+	UParticleSystemComponent* BeamParticles;
 
 	// References
 	AActor* HeldActor;

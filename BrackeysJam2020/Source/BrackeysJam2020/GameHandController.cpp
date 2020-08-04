@@ -8,6 +8,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Engine/World.h"
 #include "DrawDebugHelpers.h"
+#include "Particles/ParticleSystemComponent.h"
 
 AGameHandController::AGameHandController()
 {
@@ -16,6 +17,9 @@ AGameHandController::AGameHandController()
 	OverlappedStateTracker = nullptr;
 	OverlappedActor = nullptr;
 	RewindStateTracker = nullptr;
+
+	BeamParticles = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("BeamParticles"));
+	BeamParticles->SetupAttachment(ControllerMesh);
 }
 
 void AGameHandController::BeginPlay()
@@ -124,13 +128,14 @@ void AGameHandController::UpdateRewindVisual()
 	// Check for object that can be rewinded
 
 	FVector ControllerLocation = ControllerMesh->GetComponentLocation();
+	FVector ControllerForward = ControllerMesh->GetForwardVector();
 	if (!RewindStateTracker)
 	{
 		FHitResult HitResult;
-		GetWorld()->LineTraceSingleByChannel(HitResult, ControllerLocation, ControllerLocation + ControllerMesh->GetForwardVector() * 10000.0, ECC_Visibility);
+		GetWorld()->LineTraceSingleByChannel(HitResult, ControllerLocation, ControllerLocation + ControllerForward * 10000.0, ECC_Visibility);
 		if (HitResult.GetActor())
 		{
-			DrawDebugLine(GetWorld(), ControllerLocation, HitResult.Location, FColor::Blue, false, 0.05f, (uint8)'\000', 1.0f);
+			BeamParticles->SetVectorParameter(TEXT("TargetLocation"), HitResult.Location);
 			UStateTracker* Tracker = Cast<UStateTracker>(HitResult.GetActor()->GetComponentByClass(UStateTracker::StaticClass()));
 			if (Tracker)
 			{
@@ -141,8 +146,11 @@ void AGameHandController::UpdateRewindVisual()
 	else
 	{
 		// Todo map beam to whatever being rewinded
-		DrawDebugLine(GetWorld(), ControllerLocation, RewindStateTracker->GetLocation(), FColor::Blue, false, 0.05f, (uint8)'\000', 1.0f);
+		BeamParticles->SetVectorParameter(TEXT("TargetLocation"), RewindStateTracker->GetLocation());
 	}
+
+	BeamParticles->SetVectorParameter(TEXT("SourceLocation"), ControllerLocation);
+	BeamParticles->SetVectorParameter(TEXT("SourceTangent"), ControllerForward * 50.0);
 }
 
 void AGameHandController::ManageRewind()

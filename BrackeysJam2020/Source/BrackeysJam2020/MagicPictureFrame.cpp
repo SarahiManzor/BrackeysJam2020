@@ -71,7 +71,6 @@ void AMagicPictureFrame::BeginPlay()
 
 			FVector CamLocation = Player->PlayerCameraManager->GetCameraLocation();
 			FRotator CamRotation = Player->PlayerCameraManager->GetCameraRotation();
-			CamRotation.Roll += 180.0;
 			FVector CamRightVector = Player->PlayerCameraManager->GetActorRightVector();
 
 			FTransform CameraTransformLeft = FTransform(CamRotation, CamLocation - CamRightVector * EyeDistanceFromCenter);

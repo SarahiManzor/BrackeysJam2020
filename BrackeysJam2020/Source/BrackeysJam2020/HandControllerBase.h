@@ -6,6 +6,7 @@
 
 class UMotionControllerComponent;
 class UStaticMeshComponent;
+class UParticleSystemComponent;
 
 UCLASS()
 class BRACKEYSJAM2020_API AHandControllerBase : public AActor
