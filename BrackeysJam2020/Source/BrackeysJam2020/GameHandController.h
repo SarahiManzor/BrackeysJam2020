@@ -48,6 +48,7 @@ private:
 
 	// State
 	bool bSelectingRewind;
+	bool bTryingGrab;
 
 // ----------Custom Functions----------
 public:

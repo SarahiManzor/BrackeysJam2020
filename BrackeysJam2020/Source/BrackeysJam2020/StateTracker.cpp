@@ -94,6 +94,11 @@ bool UStateTracker::IsRewinding()
 	return !bIsRecording;
 }
 
+bool UStateTracker::IsSimulatingPhysics()
+{
+	return OwnerMesh->IsSimulatingPhysics();
+}
+
 FVector UStateTracker::GetLocation()
 {
 	return GetOwner()->GetActorLocation();

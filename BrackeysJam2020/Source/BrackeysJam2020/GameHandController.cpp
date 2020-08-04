@@ -17,6 +17,8 @@ AGameHandController::AGameHandController()
 	OverlappedStateTracker = nullptr;
 	OverlappedActor = nullptr;
 	RewindStateTracker = nullptr;
+	bTryingGrab = false;
+	bSelectingRewind = false;
 
 	BeamParticles = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("BeamParticles"));
 	BeamParticles->SetupAttachment(ControllerMesh);
@@ -52,8 +54,9 @@ void AGameHandController::Tick(float DeltaTime)
 
 void AGameHandController::Grab()
 {
+	bTryingGrab = true;
 	UE_LOG(LogTemp, Warning, TEXT("Grip Pressed"));
-	if (!OverlappedActor) return;
+	if (!OverlappedActor || !OverlappedComponent->IsSimulatingPhysics()) return;
 
 	HeldActor = OverlappedActor;
 	HeldComponent = OverlappedComponent;
@@ -69,6 +72,7 @@ void AGameHandController::Grab()
 
 void AGameHandController::Release()
 {
+	bTryingGrab = false;
 	UE_LOG(LogTemp, Warning, TEXT("Grip Released"));
 	if (!HeldActor) return;
 
@@ -109,6 +113,9 @@ void AGameHandController::OnComponentBeginOverlap(class UPrimitiveComponent* Ove
 		UE_LOG(LogTemp, Warning, TEXT("With block!"));
 		OverlappedComponent = OtherComp;
 		OverlappedActor = OtherActor;
+
+		if (bTryingGrab)
+			Grab();
 	}
 }
 
@@ -129,33 +136,37 @@ void AGameHandController::UpdateRewindVisual()
 
 	FVector ControllerLocation = ControllerMesh->GetComponentLocation();
 	FVector ControllerForward = ControllerMesh->GetForwardVector();
+	FVector TargetLocation = FVector::ZeroVector;
 	if (!RewindStateTracker)
 	{
 		FHitResult HitResult;
 		GetWorld()->LineTraceSingleByChannel(HitResult, ControllerLocation, ControllerLocation + ControllerForward * 10000.0, ECC_Visibility);
 		if (HitResult.GetActor())
 		{
-			BeamParticles->SetVectorParameter(TEXT("TargetLocation"), HitResult.Location);
+			TargetLocation = HitResult.Location;
+			BeamParticles->SetFloatParameter(TEXT("ColourAlpha"), 0.01);
+			BeamParticles->SetVectorParameter(TEXT("Colour"), FVector(1.0, 1.0, 0.0));
+
 			UStateTracker* Tracker = Cast<UStateTracker>(HitResult.GetActor()->GetComponentByClass(UStateTracker::StaticClass()));
-			if (Tracker)
-			{
-				OverlappedStateTracker = Tracker;
-			}
+			OverlappedStateTracker = Tracker; // nullptr if cast failed which is good
 		}
 	}
 	else
 	{
 		// Todo map beam to whatever being rewinded
-		BeamParticles->SetVectorParameter(TEXT("TargetLocation"), RewindStateTracker->GetLocation());
+		TargetLocation = RewindStateTracker->GetLocation();
+		BeamParticles->SetFloatParameter(TEXT("ColourAlpha"), 1.0);
+		BeamParticles->SetVectorParameter(TEXT("Colour"), FVector(0.0, 20.0, 0.0));
 	}
 
 	BeamParticles->SetVectorParameter(TEXT("SourceLocation"), ControllerLocation);
-	BeamParticles->SetVectorParameter(TEXT("SourceTangent"), ControllerForward * 50.0);
+	BeamParticles->SetVectorParameter(TEXT("TargetLocation"), TargetLocation);
+	BeamParticles->SetVectorParameter(TEXT("SourceTangent"), ControllerForward * FVector::Dist(TargetLocation, ControllerLocation) * 0.1);
 }
 
 void AGameHandController::ManageRewind()
 {
-	if (!OverlappedStateTracker || OverlappedStateTracker->IsRewinding()) return;
+	if (!OverlappedStateTracker || OverlappedStateTracker->IsRewinding() || !OverlappedStateTracker->IsSimulatingPhysics()) return;
 
 	if (RewindStateTracker == nullptr)
 	{

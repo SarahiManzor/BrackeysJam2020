@@ -56,6 +56,7 @@ public:
 	void SetRewinding(bool IsRewinding);
 	void Play();
 	bool IsRewinding();
+	bool IsSimulatingPhysics();
 	FVector GetLocation();
 protected:
 private:
