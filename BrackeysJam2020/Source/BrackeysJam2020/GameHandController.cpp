@@ -4,12 +4,18 @@
 #include "GameHandController.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/PrimitiveComponent.h"
+#include "StateTracker.h"
+#include "Kismet/GameplayStatics.h"
+#include "Engine/World.h"
+#include "DrawDebugHelpers.h"
 
 AGameHandController::AGameHandController()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
+	OverlappedStateTracker = nullptr;
 	OverlappedActor = nullptr;
+	RewindStateTracker = nullptr;
 }
 
 void AGameHandController::BeginPlay()
@@ -18,11 +24,26 @@ void AGameHandController::BeginPlay()
 
 	ControllerMesh->OnComponentBeginOverlap.AddDynamic(this, &AGameHandController::OnComponentBeginOverlap);
 	ControllerMesh->OnComponentEndOverlap.AddDynamic(this, &AGameHandController::OnComponentEndOverlap);
+
+	TArray<AActor*> FoundActors;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AActor::StaticClass(), FoundActors);
+	for (AActor* Actor : FoundActors)
+	{
+		UStateTracker* Tracker = Cast<UStateTracker>(Actor->GetComponentByClass(UStateTracker::StaticClass()));
+		if (Tracker)
+		{
+			RewindTargets.Add(Tracker);
+		}
+	}
 }
 
 void AGameHandController::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	UpdateRewindVisual();
+	if (bSelectingRewind)
+		ManageRewind();
 }
 
 void AGameHandController::Grab()
@@ -58,6 +79,23 @@ void AGameHandController::Release()
 	HeldActor = nullptr;
 }
 
+void AGameHandController::TriggerPressed()
+{
+	UE_LOG(LogTemp, Warning, TEXT("Try Rewind"));
+	bSelectingRewind = true;
+}
+
+void AGameHandController::TriggerReleased()
+{
+	UE_LOG(LogTemp, Warning, TEXT("End Rewind"));
+	bSelectingRewind = false;
+	OverlappedStateTracker = nullptr;
+	if (!RewindStateTracker) return;
+
+	RewindStateTracker->Play();
+	RewindStateTracker = nullptr;
+}
+
 void AGameHandController::OnComponentBeginOverlap(class UPrimitiveComponent* OverlappedComp, class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	UE_LOG(LogTemp, Warning, TEXT("Overlap begin: %s"), *OtherActor->GetName());
@@ -78,5 +116,42 @@ void AGameHandController::OnComponentEndOverlap(class UPrimitiveComponent* Overl
 	{
 		OverlappedActor = nullptr;
 		OverlappedComponent = nullptr;
+	}
+}
+
+void AGameHandController::UpdateRewindVisual()
+{
+	// Check for object that can be rewinded
+
+	FVector ControllerLocation = ControllerMesh->GetComponentLocation();
+	if (!RewindStateTracker)
+	{
+		FHitResult HitResult;
+		GetWorld()->LineTraceSingleByChannel(HitResult, ControllerLocation, ControllerLocation + ControllerMesh->GetForwardVector() * 10000.0, ECC_Visibility);
+		if (HitResult.GetActor())
+		{
+			DrawDebugLine(GetWorld(), ControllerLocation, HitResult.Location, FColor::Blue, false, 0.05f, (uint8)'\000', 1.0f);
+			UStateTracker* Tracker = Cast<UStateTracker>(HitResult.GetActor()->GetComponentByClass(UStateTracker::StaticClass()));
+			if (Tracker)
+			{
+				OverlappedStateTracker = Tracker;
+			}
+		}
+	}
+	else
+	{
+		// Todo map beam to whatever being rewinded
+		DrawDebugLine(GetWorld(), ControllerLocation, RewindStateTracker->GetLocation(), FColor::Blue, false, 0.05f, (uint8)'\000', 1.0f);
+	}
+}
+
+void AGameHandController::ManageRewind()
+{
+	if (!OverlappedStateTracker || OverlappedStateTracker->IsRewinding()) return;
+
+	if (RewindStateTracker == nullptr)
+	{
+		RewindStateTracker = OverlappedStateTracker;
+		RewindStateTracker->SetRewinding(true);
 	}
 }

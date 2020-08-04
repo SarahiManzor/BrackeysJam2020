@@ -6,9 +6,8 @@
 #include "HandControllerBase.h"
 #include "GameHandController.generated.h"
 
-/**
- * 
- */
+class UStateTracker;
+
 UCLASS()
 class BRACKEYSJAM2020_API AGameHandController : public AHandControllerBase
 {
@@ -39,12 +38,22 @@ private:
 	AActor* OverlappedActor;
 	UPrimitiveComponent* OverlappedComponent;
 
+	UStateTracker* OverlappedStateTracker;
+	UStateTracker* RewindStateTracker;
+
+	// List of possible targets use to add aim assist
+	TArray<UStateTracker*> RewindTargets;
+
 	// State
+	bool bSelectingRewind;
 
 // ----------Custom Functions----------
 public:
 	virtual void Grab() override;
 	virtual void Release() override;
+
+	virtual void TriggerPressed() override;
+	virtual void TriggerReleased() override;
 protected:
 private:
 	UFUNCTION()
@@ -52,5 +61,8 @@ private:
 
 	UFUNCTION()
 	void OnComponentEndOverlap(class UPrimitiveComponent* OverlappedComp, class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+
+	void UpdateRewindVisual();
+	void ManageRewind();
 	
 };

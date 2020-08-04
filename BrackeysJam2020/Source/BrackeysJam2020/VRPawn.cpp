@@ -87,6 +87,12 @@ void AVRPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 	PlayerInputComponent->BindAction(TEXT("RightTeleport"), IE_Pressed, this, &AVRPawn::TeleportButtonPressedRight);
 	PlayerInputComponent->BindAction(TEXT("RightTeleport"), IE_Released, this, &AVRPawn::TeleportButtonReleasedRight);
 
+	PlayerInputComponent->BindAction(TEXT("LeftRewind"), IE_Pressed, this, &AVRPawn::RewindButtonPressedLeft);
+	PlayerInputComponent->BindAction(TEXT("LeftRewind"), IE_Released, this, &AVRPawn::RewindButtonReleasedLeft);
+
+	PlayerInputComponent->BindAction(TEXT("RightRewind"), IE_Pressed, this, &AVRPawn::RewindButtonPressedRight);
+	PlayerInputComponent->BindAction(TEXT("RightRewind"), IE_Released, this, &AVRPawn::RewindButtonReleasedRight);
+
 	UE_LOG(LogTemp, Warning, TEXT("Inputs Initialized"));
 }
 
@@ -136,6 +142,26 @@ void AVRPawn::TeleportButtonReleasedRight()
 	StartTeleport();
 	TeleportingHand = nullptr;
 	bSelectingTeleport = false;
+}
+
+void AVRPawn::RewindButtonPressedLeft()
+{
+	LeftHandController->TriggerPressed();
+}
+
+void AVRPawn::RewindButtonReleasedLeft()
+{
+	LeftHandController->TriggerReleased();
+}
+
+void AVRPawn::RewindButtonPressedRight()
+{
+	RightHandController->TriggerPressed();
+}
+
+void AVRPawn::RewindButtonReleasedRight()
+{
+	RightHandController->TriggerReleased();
 }
 
 #pragma endregion

@@ -47,3 +47,13 @@ void AHandControllerBase::Release()
 
 }
 
+void AHandControllerBase::TriggerPressed()
+{
+
+}
+
+void AHandControllerBase::TriggerReleased()
+{
+
+}
+

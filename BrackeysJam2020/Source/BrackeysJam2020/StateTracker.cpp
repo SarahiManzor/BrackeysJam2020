@@ -7,6 +7,7 @@ UStateTracker::UStateTracker()
 	PrimaryComponentTick.bCanEverTick = true;
 
 	bIsRecording = true;
+	bIgnoreDuplicateLocations = true;
 }
 
 
@@ -35,8 +36,13 @@ void UStateTracker::TickComponent(float DeltaTime, ELevelTick TickType, FActorCo
 	if (bIsRecording) Record();
 	else Rewind();
 
-	if (PointsInTime.Num() > 350.0)
-		bIsRecording = false;
+	/*if (PointsInTime.Num() > 350.0)
+		bIsRecording = false;*/
+}
+
+void UStateTracker::SetRewinding(bool IsRewinding)
+{
+	bIsRecording = !IsRewinding;
 }
 
 void UStateTracker::Record()
@@ -46,18 +52,19 @@ void UStateTracker::Record()
 	NewTime.Rotation = OwnerMesh->GetComponentRotation();
 	NewTime.Velocity = OwnerMesh->GetComponentVelocity();
 
-	PointsInTime.Insert(NewTime, 0);
+	if (PointsInTime.Num() <= 0 || !PointsInTime[0].Location.Equals(NewTime.Location))
+	{
+		PointsInTime.Insert(NewTime, 0);
+	}
 }
 
 void UStateTracker::Rewind()
 {
 	if (PointsInTime.Num() <= 0)
 	{
-		Play();
 		return;
 	}
 
-	bIsRecording = false;
 	OwnerMesh->SetEnableGravity(false);
 	OwnerMesh->SetSimulatePhysics(false);	
 
@@ -76,11 +83,18 @@ void UStateTracker::Rewind()
 
 void UStateTracker::Play()
 {
-	if (bIsRecording) return;
-
 	bIsRecording = true;
 	OwnerMesh->SetEnableGravity(bHasGravity);
 	OwnerMesh->SetSimulatePhysics(true);
 	OwnerMesh->SetPhysicsLinearVelocity(LastVelocity);
 }
 
+bool UStateTracker::IsRewinding()
+{
+	return !bIsRecording;
+}
+
+FVector UStateTracker::GetLocation()
+{
+	return GetOwner()->GetActorLocation();
+}

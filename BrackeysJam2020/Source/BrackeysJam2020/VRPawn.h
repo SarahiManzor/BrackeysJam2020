@@ -94,6 +94,12 @@ private:
 
 	void TeleportButtonPressedRight();
 	void TeleportButtonReleasedRight();
+	
+	void RewindButtonPressedLeft();
+	void RewindButtonReleasedLeft();
+
+	void RewindButtonPressedRight();
+	void RewindButtonReleasedRight();
 
 	void UpdateTeleportMarker();
 

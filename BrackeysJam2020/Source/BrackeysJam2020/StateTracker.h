@@ -40,6 +40,7 @@ private:
 	// Config
 	bool bHasGravity;
 	bool bIsRecording;
+	bool bIgnoreDuplicateLocations;
 
 	// Components
 
@@ -52,11 +53,14 @@ private:
 
 // ----------Custom Functions----------
 public:
+	void SetRewinding(bool IsRewinding);
+	void Play();
+	bool IsRewinding();
+	FVector GetLocation();
 protected:
 private:
 	void Record();
 	void Rewind();
-	void Play();
 
 		
 };

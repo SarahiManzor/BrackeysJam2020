@@ -12,7 +12,7 @@ class BRACKEYSJAM2020_API AHandControllerBase : public AActor
 {
 	GENERATED_BODY()
 
-		// ----------Base Functions----------
+	// ----------Base Functions----------
 public:
 	AHandControllerBase();
 
@@ -22,7 +22,7 @@ protected:
 public:
 	virtual void Tick(float DeltaTime) override;
 
-	// ----------Variables----------
+// ----------Variables----------
 public:
 	// Components
 	UPROPERTY(VisibleAnywhere)
@@ -40,5 +40,8 @@ public:
 
 	virtual void Grab();
 	virtual void Release();
+
+	virtual void TriggerPressed();
+	virtual void TriggerReleased();
 
 };
