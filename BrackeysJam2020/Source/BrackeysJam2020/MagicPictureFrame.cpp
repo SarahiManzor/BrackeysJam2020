@@ -8,6 +8,9 @@
 #include "Engine/GameViewportClient.h"
 #include "Materials/MaterialInstanceDynamic.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "IXRTrackingSystem.h"
+#include "IHeadMountedDisplay.h"
+#include "Engine/LocalPlayer.h"
 
 AMagicPictureFrame::AMagicPictureFrame()
 {
@@ -18,12 +21,20 @@ AMagicPictureFrame::AMagicPictureFrame()
 
 	FrameMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("FrameMesh"));
 	FrameMesh->SetupAttachment(Root);
-	
-	PictureMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("PictureMesh"));
-	PictureMesh->SetupAttachment(Root);
 
-	SceneCapture = CreateDefaultSubobject<USceneCaptureComponent2D>(TEXT("SceneCapture"));
-	SceneCapture->SetupAttachment(Root);
+	PictureMeshLeft = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("PictureMeshLeft"));
+	PictureMeshLeft->SetupAttachment(Root);
+
+	PictureMeshRight = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("PictureMeshRight"));
+	PictureMeshRight->SetupAttachment(Root);
+
+	SceneCaptureLeft = CreateDefaultSubobject<USceneCaptureComponent2D>(TEXT("SceneCaptureLeft"));
+	SceneCaptureLeft->SetupAttachment(Root);
+
+	SceneCaptureRight = CreateDefaultSubobject<USceneCaptureComponent2D>(TEXT("SceneCaptureRight"));
+	SceneCaptureRight->SetupAttachment(Root);
+
+	EyeDistanceFromCenter = 2.5f;
 }
 
 void AMagicPictureFrame::BeginPlay()
@@ -37,24 +48,54 @@ void AMagicPictureFrame::BeginPlay()
 		int32 ViewportX;
 		int32 ViewportY;
 		Player->GetViewportSize(ViewportX, ViewportY);
-		RenderTarget = UKismetRenderingLibrary::CreateRenderTarget2D(this, ViewportX, ViewportY);
-		SceneCapture->TextureTarget = RenderTarget;
-		SceneCapture->HiddenActors.Add(this);
 
-		if (PictureMaterial)
+		RenderTargetLeft = UKismetRenderingLibrary::CreateRenderTarget2D(this, ViewportX / 2, ViewportY);
+		SceneCaptureLeft->TextureTarget = RenderTargetLeft;
+		SceneCaptureLeft->HiddenActors.Add(this);
+
+		RenderTargetRight = UKismetRenderingLibrary::CreateRenderTarget2D(this, ViewportX / 2, ViewportY);
+		SceneCaptureRight->TextureTarget = RenderTargetRight;
+		SceneCaptureRight->HiddenActors.Add(this);
+
+		if (PictureMaterialLeft)
 		{
-			UMaterialInstanceDynamic* DynamicMaterial = UMaterialInstanceDynamic::Create(PictureMaterial, this);
-			DynamicMaterial->SetTextureParameterValue(PictureTextureParameterName, RenderTarget);
+			UMaterialInstanceDynamic* DynamicMaterialLeft = UMaterialInstanceDynamic::Create(PictureMaterialLeft, this);
+			DynamicMaterialLeft->SetTextureParameterValue(PictureTextureParameterName, RenderTargetLeft);
 
-			PictureMesh->SetMaterial(0, DynamicMaterial);
+			PictureMeshLeft->SetMaterial(0, DynamicMaterialLeft);
+
+			UMaterialInstanceDynamic* DynamicMaterialRight = UMaterialInstanceDynamic::Create(PictureMaterialRight, this);
+			DynamicMaterialRight->SetTextureParameterValue(PictureTextureParameterName, RenderTargetRight);
+
+			PictureMeshRight->SetMaterial(0, DynamicMaterialRight);
+
+			FVector CamLocation = Player->PlayerCameraManager->GetCameraLocation();
+			FRotator CamRotation = Player->PlayerCameraManager->GetCameraRotation();
+			CamRotation.Roll += 180.0;
+			FVector CamRightVector = Player->PlayerCameraManager->GetActorRightVector();
+
+			FTransform CameraTransformLeft = FTransform(CamRotation, CamLocation - CamRightVector * EyeDistanceFromCenter);
+			UpdatePortalVPMParameters(SceneCaptureLeft, DynamicMaterialLeft, CameraTransformLeft);
+
+			FTransform CameraTransformRight = FTransform(CamRotation, CamLocation + CamRightVector * EyeDistanceFromCenter);
+			UpdatePortalVPMParameters(SceneCaptureRight, DynamicMaterialRight, CameraTransformRight);
 		}
 	}
 }
 
 void AMagicPictureFrame::UpdateCaptureComponent()
 {
-	SceneCapture->SetWorldLocation(Player->PlayerCameraManager->GetCameraLocation());
-	SceneCapture->SetWorldRotation(Player->PlayerCameraManager->GetCameraRotation());
+	FVector CamLocation = Player->PlayerCameraManager->GetCameraLocation();
+	FRotator CamRotation = Player->PlayerCameraManager->GetCameraRotation();
+
+	SceneCaptureLeft->SetWorldLocation(CamLocation);
+	SceneCaptureLeft->SetWorldRotation(CamRotation);
+
+	SceneCaptureRight->SetWorldLocation(CamLocation);
+	SceneCaptureRight->SetWorldRotation(CamRotation);
+
+	UE_LOG(LogTemp, Warning, TEXT("Location %s"), *CamLocation.ToCompactString());
+	UE_LOG(LogTemp, Warning, TEXT("Rotation %s"), *CamRotation.ToCompactString());
 }
 
 void AMagicPictureFrame::Tick(float DeltaTime)
@@ -64,3 +105,122 @@ void AMagicPictureFrame::Tick(float DeltaTime)
 	UpdateCaptureComponent();
 }
 
+//Credit goes to AgentMilkshake1 https://answers.unrealengine.com/questions/234597/screenspace-portals-on-vr.html
+void AMagicPictureFrame::UpdatePortalVPMParameters(USceneCaptureComponent2D* CaptureComponent, UMaterialInstanceDynamic* MaterialInstance, const FTransform& CameraTransform)
+{
+	if (!IsValid(CaptureComponent) || !IsValid(MaterialInstance))
+	{
+		return;
+	}
+
+	if (!IsValid(CaptureComponent->TextureTarget))
+	{
+		return;
+	}
+
+	float CaptureSizeX = CaptureComponent->TextureTarget->GetSurfaceWidth();
+	float CaptureSizeY = CaptureComponent->TextureTarget->GetSurfaceHeight();
+	const FTransform& Transform = CameraTransform;
+	FMatrix ViewMatrix = Transform.ToInverseMatrixWithScale();
+	FVector ViewLocation = Transform.GetTranslation();
+	// swap axis st. x=z,y=x,z=y (unreal coord space) so that z is up
+	ViewMatrix = ViewMatrix * FMatrix(
+		FPlane(0, 0, 1, 0),
+		FPlane(1, 0, 0, 0),
+		FPlane(0, 1, 0, 0),
+		FPlane(0, 0, 0, 1));
+	CaptureComponent->FOVAngle = GetFOVForCaptureComponents(Player);
+	const float FOV = CaptureComponent->FOVAngle * (float)PI / 360.0f;
+
+	// Build projection matrix
+	float XAxisMultiplier;
+	float YAxisMultiplier;
+
+	if (CaptureSizeX > CaptureSizeY)
+	{
+		// if the viewport is wider than it is tall
+		XAxisMultiplier = 1.0f;
+		YAxisMultiplier = CaptureSizeX / CaptureSizeY;
+	}
+	else
+	{
+		// if the viewport is taller than it is wide
+		XAxisMultiplier = CaptureSizeY / CaptureSizeX;
+		YAxisMultiplier = 1.0f;
+	}
+
+	FMatrix ProjectionMatrix = FReversedZPerspectiveMatrix(
+		FOV,
+		FOV,
+		XAxisMultiplier,
+		YAxisMultiplier,
+		10,
+		1000
+	);
+
+	const FMatrix ViewProjectionMatrix = ViewMatrix * ProjectionMatrix;
+
+	FVector Xaxis = ViewProjectionMatrix.GetColumn(0);
+	FVector Yaxis = ViewProjectionMatrix.GetColumn(1);
+	FVector Zaxis = ViewProjectionMatrix.GetColumn(2);
+	FVector Waxis = ViewProjectionMatrix.GetColumn(3);
+
+	float XaxisW = ViewProjectionMatrix.M[3][0];
+	float YaxisW = ViewProjectionMatrix.M[3][1];
+	float ZaxisW = ViewProjectionMatrix.M[3][2];
+	float WaxisW = ViewProjectionMatrix.M[3][3];
+
+	MaterialInstance->SetVectorParameterValue("PortalVPM_Xaxis", FLinearColor(Xaxis.X, Xaxis.Y, Xaxis.Z, XaxisW));
+	MaterialInstance->SetVectorParameterValue("PortalVPM_Yaxis", FLinearColor(Yaxis.X, Yaxis.Y, Yaxis.Z, YaxisW));
+	MaterialInstance->SetVectorParameterValue("PortalVPM_Zaxis", FLinearColor(Zaxis.X, Zaxis.Y, Zaxis.Z, ZaxisW));
+	MaterialInstance->SetVectorParameterValue("PortalVPM_Waxis", FLinearColor(Waxis.X, Waxis.Y, Waxis.Z, WaxisW));
+}
+
+//Credit goes to AgentMilkshake1 https://answers.unrealengine.com/questions/234597/screenspace-portals-on-vr.html
+float AMagicPictureFrame::GetFOVForCaptureComponents(const APlayerController* ForPlayerController)
+{
+	float ResultFOV = 90.0f;
+
+	if (ForPlayerController != nullptr)
+	{
+		if (ForPlayerController->PlayerCameraManager != nullptr)
+		{
+			ResultFOV = ForPlayerController->PlayerCameraManager->GetFOVAngle();
+		}
+	}
+
+	if (!GEngine)
+	{
+		return ResultFOV;
+	}
+
+	// FOV changes when we have a VR Headset enabled
+	if (GEngine->XRSystem.IsValid() && GEngine->IsStereoscopic3D())
+	{
+		const float EdgeScaling = 1.1f;
+		float HFOV, VFOV;
+		GEngine->XRSystem->GetHMDDevice()->GetFieldOfView(HFOV, VFOV);
+		if (VFOV > 0 && HFOV > 0)
+		{
+			ResultFOV = FMath::Max(HFOV, VFOV) * EdgeScaling;
+			// AspectRatio won't be used until bConstrainAspectRatio is set to true,
+			// but it doesn't really matter since HMD calcs its own projection matrix.
+			//OutViewInfo.AspectRatio = HFOV / VFOV;
+			//OutViewInfo.bConstrainAspectRatio = true;
+		}
+		else
+		{
+			FSceneViewProjectionData ProjectionData;
+
+			//SteamVR may not have FOV information, try to it via the current viewport
+			ULocalPlayer* LocalPlayer = GEngine->GetGamePlayer(GEngine->GameViewport, 0);
+			LocalPlayer->GetProjectionData(GEngine->GameViewport->Viewport, eSSP_FULL, ProjectionData);
+
+			float t = ProjectionData.ProjectionMatrix.M[1][1];
+			const float Rad2Deg = 180 / PI;
+			ResultFOV = FMath::Atan(1.f / t) * 4.f * Rad2Deg * EdgeScaling;
+		}
+	}
+
+	return ResultFOV;
+}

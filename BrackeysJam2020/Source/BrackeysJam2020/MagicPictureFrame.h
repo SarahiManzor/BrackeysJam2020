@@ -30,23 +30,36 @@ protected:
 private:
 	// Config
 	UPROPERTY(EditDefaultsOnly)
-	UMaterialInterface* PictureMaterial;
+	UMaterialInterface* PictureMaterialLeft;
+
+	UPROPERTY(EditDefaultsOnly)
+	UMaterialInterface* PictureMaterialRight;
 
 	UPROPERTY(EditDefaultsOnly)
 	FName PictureTextureParameterName;
+
+	UPROPERTY(EditAnywhere)
+	float EyeDistanceFromCenter;
 
 	// Components
 	UPROPERTY(VisibleAnywhere)
 	UStaticMeshComponent* FrameMesh;
 
 	UPROPERTY(VisibleAnywhere)
-	UStaticMeshComponent* PictureMesh;
+	UStaticMeshComponent* PictureMeshLeft;
 
 	UPROPERTY(VisibleAnywhere)
-	USceneCaptureComponent2D* SceneCapture;
+	UStaticMeshComponent* PictureMeshRight;
+
+	UPROPERTY(VisibleAnywhere)
+	USceneCaptureComponent2D* SceneCaptureLeft;
+	
+	UPROPERTY(VisibleAnywhere)
+	USceneCaptureComponent2D* SceneCaptureRight;
 
 	// References
-	UTextureRenderTarget2D* RenderTarget;
+	UTextureRenderTarget2D* RenderTargetLeft;
+	UTextureRenderTarget2D* RenderTargetRight;
 
 	APlayerController* Player;
 
@@ -57,5 +70,6 @@ public:
 protected:
 private:
 	void UpdateCaptureComponent();
-
+	void UpdatePortalVPMParameters(USceneCaptureComponent2D* CaptureComponent, UMaterialInstanceDynamic* MaterialInstance, const FTransform& CameraTransform);
+	float GetFOVForCaptureComponents(const APlayerController* ForPlayerController = nullptr);
 };
