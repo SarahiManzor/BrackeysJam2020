@@ -26,6 +26,7 @@ void UStateTracker::BeginPlay()
 	
 	HighlightMesh = NewObject<UStaticMeshComponent>(this, TEXT("HighlightMesh"));
 	HighlightMesh->SetSimulatePhysics(false);
+	HighlightMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	HighlightMesh->RegisterComponent();
 	HighlightMesh->AttachToComponent(OwnerMesh, FAttachmentTransformRules::KeepWorldTransform);
 	HighlightMesh->SetStaticMesh(OwnerMesh->GetStaticMesh());
