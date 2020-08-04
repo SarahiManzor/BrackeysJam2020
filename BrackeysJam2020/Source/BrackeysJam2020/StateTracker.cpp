@@ -23,7 +23,17 @@ void UStateTracker::BeginPlay()
 	if (!OwnerMesh) return;
 	
 	bHasGravity = OwnerMesh->IsGravityEnabled();
-	UE_LOG(LogTemp, Warning, TEXT("Gravity"));
+	
+	HighlightMesh = NewObject<UStaticMeshComponent>(this, TEXT("HighlightMesh"));
+	HighlightMesh->SetSimulatePhysics(false);
+	HighlightMesh->RegisterComponent();
+	HighlightMesh->AttachToComponent(OwnerMesh, FAttachmentTransformRules::KeepWorldTransform);
+	HighlightMesh->SetStaticMesh(OwnerMesh->GetStaticMesh());
+	HighlightMesh->SetWorldLocation(OwnerMesh->GetComponentLocation());
+	HighlightMesh->SetWorldRotation(OwnerMesh->GetComponentRotation());
+	HighlightMesh->SetRelativeScale3D(FVector(1.1, 1.1, 1.1));
+	HighlightMesh->SetMaterial(0, HighlightMaterial);
+	HighlightMesh->SetVisibility(false);
 }
 
 
@@ -102,4 +112,14 @@ bool UStateTracker::IsSimulatingPhysics()
 FVector UStateTracker::GetLocation()
 {
 	return GetOwner()->GetActorLocation();
+}
+
+void UStateTracker::AddHighlight()
+{
+	HighlightMesh->SetVisibility(true);
+}
+
+void UStateTracker::RemoveHighlight()
+{
+	HighlightMesh->SetVisibility(false);
 }

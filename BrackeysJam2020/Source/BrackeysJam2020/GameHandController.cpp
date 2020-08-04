@@ -100,6 +100,7 @@ void AGameHandController::TriggerReleased()
 	OverlappedStateTracker = nullptr;
 	if (!RewindStateTracker) return;
 
+	RewindStateTracker->RemoveHighlight();
 	RewindStateTracker->Play();
 	RewindStateTracker = nullptr;
 }
@@ -133,7 +134,6 @@ void AGameHandController::OnComponentEndOverlap(class UPrimitiveComponent* Overl
 void AGameHandController::UpdateRewindVisual()
 {
 	// Check for object that can be rewinded
-
 	FVector ControllerLocation = ControllerMesh->GetComponentLocation();
 	FVector ControllerForward = ControllerMesh->GetForwardVector();
 	FVector TargetLocation = FVector::ZeroVector;
@@ -148,6 +148,17 @@ void AGameHandController::UpdateRewindVisual()
 			BeamParticles->SetVectorParameter(TEXT("Colour"), FVector(1.0, 1.0, 0.0));
 
 			UStateTracker* Tracker = Cast<UStateTracker>(HitResult.GetActor()->GetComponentByClass(UStateTracker::StaticClass()));
+			
+			if (OverlappedStateTracker != nullptr && Tracker != OverlappedStateTracker)
+			{
+				// Remove highlight from already highlighted tracker
+				OverlappedStateTracker->RemoveHighlight();
+			}
+			else if (Tracker != nullptr)
+			{
+				// Add Highlight to new object
+				Tracker->AddHighlight();
+			}
 			OverlappedStateTracker = Tracker; // nullptr if cast failed which is good
 		}
 	}

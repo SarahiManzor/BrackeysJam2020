@@ -46,6 +46,10 @@ private:
 
 	// References
 	UStaticMeshComponent* OwnerMesh;
+	UStaticMeshComponent* HighlightMesh;
+
+	UPROPERTY(EditAnywhere)
+	UMaterialInterface* HighlightMaterial;
 
 	// State
 	TArray<FPointInTime> PointsInTime;
@@ -58,6 +62,9 @@ public:
 	bool IsRewinding();
 	bool IsSimulatingPhysics();
 	FVector GetLocation();
+
+	void AddHighlight();
+	void RemoveHighlight();
 protected:
 private:
 	void Record();
