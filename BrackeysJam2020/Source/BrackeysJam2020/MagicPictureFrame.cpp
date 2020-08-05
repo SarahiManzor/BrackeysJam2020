@@ -54,9 +54,6 @@ void AMagicPictureFrame::BeginPlay()
 		SceneCaptureRight->TextureTarget = RenderTargetRight;
 		SceneCaptureRight->HiddenActors.Add(this);
 
-		SceneCaptureLeft->ClipPlaneBase = SceneCaptureRight->ClipPlaneBase = GetActorLocation();
-		SceneCaptureLeft->ClipPlaneNormal = SceneCaptureRight->ClipPlaneNormal = GetActorForwardVector();
-
 		float FOV = GetFOVForCaptureComponents(Player);
 		SceneCaptureLeft->FOVAngle = FOV;
 		SceneCaptureRight->FOVAngle = FOV;
@@ -102,6 +99,9 @@ void AMagicPictureFrame::UpdateCaptureComponent()
 
 	SceneCaptureRight->SetWorldLocation(CamLocationRight);
 	SceneCaptureRight->SetWorldRotation(CamRotation);
+
+	SceneCaptureLeft->ClipPlaneBase = SceneCaptureRight->ClipPlaneBase = GetActorLocation();
+	SceneCaptureLeft->ClipPlaneNormal = SceneCaptureRight->ClipPlaneNormal = GetActorForwardVector() * 0.1;
 
 	FTransform CameraTransformLeft = FTransform(CamRotation, CamLocationLeft);
 	FTransform CameraTransformRight = FTransform(CamRotation, CamLocationRight);
