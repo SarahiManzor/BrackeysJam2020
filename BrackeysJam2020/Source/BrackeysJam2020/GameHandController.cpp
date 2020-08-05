@@ -115,7 +115,7 @@ void AGameHandController::OnComponentBeginOverlap(class UPrimitiveComponent* Ove
 		OverlappedComponent = OtherComp;
 		OverlappedActor = OtherActor;
 
-		if (bTryingGrab)
+		if (bTryingGrab && !HeldActor)
 			Grab();
 	}
 }

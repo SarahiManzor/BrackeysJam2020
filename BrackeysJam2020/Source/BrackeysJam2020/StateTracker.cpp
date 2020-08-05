@@ -10,7 +10,6 @@ UStateTracker::UStateTracker()
 	bIgnoreDuplicateLocations = true;
 }
 
-
 // Called when the game starts
 void UStateTracker::BeginPlay()
 {
@@ -61,7 +60,8 @@ void UStateTracker::Record()
 	FPointInTime NewTime = FPointInTime();
 	NewTime.Location = OwnerMesh->GetComponentLocation();
 	NewTime.Rotation = OwnerMesh->GetComponentRotation();
-	NewTime.Velocity = OwnerMesh->GetComponentVelocity();
+	NewTime.LinearVelocity = OwnerMesh->GetPhysicsLinearVelocity();
+	NewTime.AngularVelocity = OwnerMesh->GetPhysicsAngularVelocityInDegrees();
 
 	if (PointsInTime.Num() <= 0 || !PointsInTime[0].Location.Equals(NewTime.Location))
 	{
@@ -82,7 +82,8 @@ void UStateTracker::Rewind()
 	FPointInTime LatestTime = PointsInTime[0];
 	OwnerMesh->SetWorldLocation(LatestTime.Location);
 	OwnerMesh->SetWorldRotation(LatestTime.Rotation);
-	LastVelocity = LatestTime.Velocity;
+	LastLinearVelocity = LatestTime.LinearVelocity;
+	LastAngularVelocity = LatestTime.AngularVelocity;
 	PointsInTime.RemoveAt(0);
 
 	// Todo account for frame rate
@@ -97,7 +98,8 @@ void UStateTracker::Play()
 	bIsRecording = true;
 	OwnerMesh->SetEnableGravity(bHasGravity);
 	OwnerMesh->SetSimulatePhysics(true);
-	OwnerMesh->SetPhysicsLinearVelocity(LastVelocity);
+	OwnerMesh->SetPhysicsLinearVelocity(LastLinearVelocity);
+	OwnerMesh->SetPhysicsAngularVelocityInDegrees(LastAngularVelocity);
 }
 
 bool UStateTracker::IsRewinding()

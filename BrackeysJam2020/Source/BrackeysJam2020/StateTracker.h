@@ -14,7 +14,8 @@ struct BRACKEYSJAM2020_API FPointInTime
 	GENERATED_USTRUCT_BODY()
 	FVector Location;
 	FRotator Rotation;
-	FVector Velocity;
+	FVector LinearVelocity;
+	FVector AngularVelocity;
 };
 
 
@@ -53,7 +54,8 @@ private:
 
 	// State
 	TArray<FPointInTime> PointsInTime;
-	FVector LastVelocity;
+	FVector LastLinearVelocity;
+	FVector LastAngularVelocity;
 
 // ----------Custom Functions----------
 public:
