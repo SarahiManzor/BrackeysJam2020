@@ -101,7 +101,12 @@ void AMagicPictureFrame::UpdateCaptureComponent()
 	SceneCaptureRight->SetWorldRotation(CamRotation);
 
 	SceneCaptureLeft->ClipPlaneBase = SceneCaptureRight->ClipPlaneBase = GetActorLocation();
-	SceneCaptureLeft->ClipPlaneNormal = SceneCaptureRight->ClipPlaneNormal = GetActorForwardVector() * 0.1;
+
+	FVector ClipNormal = GetActorForwardVector() * 0.1;
+	if (FVector::DotProduct(GetActorLocation() - CamLocationLeft, ClipNormal) < 0.0)
+		ClipNormal *= -1.0;
+
+	SceneCaptureLeft->ClipPlaneNormal = SceneCaptureRight->ClipPlaneNormal = ClipNormal;
 
 	FTransform CameraTransformLeft = FTransform(CamRotation, CamLocationLeft);
 	FTransform CameraTransformRight = FTransform(CamRotation, CamLocationRight);

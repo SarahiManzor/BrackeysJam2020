@@ -50,6 +50,18 @@ void AVRPawn::BeginPlay()
 		LeftHandController->SetOwner(this);
 		LeftHandController->SetTrackingSource(EControllerHand::Left);
 	}
+
+	APlayerController* Player = UGameplayStatics::GetPlayerController(this, 0);
+
+	TArray<AActor*> FoundActors;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AActor::StaticClass(), FoundActors);
+	for (AActor* Actor : FoundActors)
+	{
+		if (Actor->Tags.Contains(TEXT("Hidden")))
+		{
+			Player->HiddenActors.Add(Actor);
+		}
+	}
 }
 
 // Called every frame
