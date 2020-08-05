@@ -15,10 +15,10 @@ void UStateTracker::BeginPlay()
 {
 	Super::BeginPlay();
 
-	AStaticMeshActor* OwnerActor = Cast<AStaticMeshActor>(GetOwner());
+	AActor* OwnerActor = Cast<AActor>(GetOwner());
 	if (!OwnerActor) return;
 
-	OwnerMesh = OwnerActor->GetStaticMeshComponent();
+	OwnerMesh = Cast<UStaticMeshComponent>(OwnerActor->GetComponentByClass(UStaticMeshComponent::StaticClass()));
 	if (!OwnerMesh) return;
 	
 	bHasGravity = OwnerMesh->IsGravityEnabled();
@@ -71,7 +71,7 @@ void UStateTracker::Record()
 
 void UStateTracker::Rewind()
 {
-	if (PointsInTime.Num() <= 0)
+	if (PointsInTime.Num() <= 5)
 	{
 		return;
 	}

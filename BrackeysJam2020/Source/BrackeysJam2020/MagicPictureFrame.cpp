@@ -84,9 +84,15 @@ void AMagicPictureFrame::BeginPlay()
 				Player->HiddenActors.Add(Actor);
 				HiddenActors.Add(Actor);
 			}
+			else if(Actor->Tags.Contains(TEXT("Visible")))
+			{
+				HiddenActors.Add(Actor);
+				SceneCaptureLeft->HiddenActors.Add(Actor);
+				SceneCaptureRight->HiddenActors.Add(Actor);
+			}
 		}
-		HiddenActors.Append(SceneCaptureLeft->HiddenActors);
-		HiddenActors.Remove(this);
+		SceneCaptureLeft->HiddenActors.Add(this);
+		SceneCaptureRight->HiddenActors.Add(this);
 	}
 }
 
