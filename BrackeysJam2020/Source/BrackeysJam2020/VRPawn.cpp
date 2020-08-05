@@ -93,6 +93,9 @@ void AVRPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 	PlayerInputComponent->BindAction(TEXT("RightRewind"), IE_Pressed, this, &AVRPawn::RewindButtonPressedRight);
 	PlayerInputComponent->BindAction(TEXT("RightRewind"), IE_Released, this, &AVRPawn::RewindButtonReleasedRight);
 
+	PlayerInputComponent->BindAction(TEXT("LeftRotate"), IE_Pressed, this, &AVRPawn::RotateButtonPressedLeft);
+	PlayerInputComponent->BindAction(TEXT("RightRotate"), IE_Pressed, this, &AVRPawn::RotateButtonPressedRight);
+
 	UE_LOG(LogTemp, Warning, TEXT("Inputs Initialized"));
 }
 
@@ -162,6 +165,16 @@ void AVRPawn::RewindButtonPressedRight()
 void AVRPawn::RewindButtonReleasedRight()
 {
 	RightHandController->TriggerReleased();
+}
+
+void AVRPawn::RotateButtonPressedLeft()
+{
+	SetActorRotation(GetActorRotation() - FRotator(0.0, 15.0, 0.0));
+}
+
+void AVRPawn::RotateButtonPressedRight()
+{
+	SetActorRotation(GetActorRotation() + FRotator(0.0, 15.0, 0.0));
 }
 
 #pragma endregion

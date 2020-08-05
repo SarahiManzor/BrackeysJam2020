@@ -101,6 +101,9 @@ private:
 	void RewindButtonPressedRight();
 	void RewindButtonReleasedRight();
 
+	void RotateButtonPressedLeft();
+	void RotateButtonPressedRight();
+
 	void UpdateTeleportMarker();
 
 	void StartTeleport();

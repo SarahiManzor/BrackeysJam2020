@@ -15,24 +15,21 @@
 AMagicPictureFrame::AMagicPictureFrame()
 {
 	PrimaryActorTick.bCanEverTick = true;
-
-	USceneComponent* Root = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
-	SetRootComponent(Root);
-
+	
 	FrameMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("FrameMesh"));
-	FrameMesh->SetupAttachment(Root);
+	SetRootComponent(FrameMesh);
 
 	PictureMeshLeft = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("PictureMeshLeft"));
-	PictureMeshLeft->SetupAttachment(Root);
+	PictureMeshLeft->SetupAttachment(FrameMesh);
 
 	PictureMeshRight = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("PictureMeshRight"));
-	PictureMeshRight->SetupAttachment(Root);
+	PictureMeshRight->SetupAttachment(FrameMesh);
 
 	SceneCaptureLeft = CreateDefaultSubobject<USceneCaptureComponent2D>(TEXT("SceneCaptureLeft"));
-	SceneCaptureLeft->SetupAttachment(Root);
+	SceneCaptureLeft->SetupAttachment(FrameMesh);
 
 	SceneCaptureRight = CreateDefaultSubobject<USceneCaptureComponent2D>(TEXT("SceneCaptureRight"));
-	SceneCaptureRight->SetupAttachment(Root);
+	SceneCaptureRight->SetupAttachment(FrameMesh);
 
 	EyeDistanceFromCenter = 2.5f;
 }
@@ -49,15 +46,22 @@ void AMagicPictureFrame::BeginPlay()
 		int32 ViewportY;
 		Player->GetViewportSize(ViewportX, ViewportY);
 
-		RenderTargetLeft = UKismetRenderingLibrary::CreateRenderTarget2D(this, ViewportX / 2, ViewportY);
+		RenderTargetLeft = UKismetRenderingLibrary::CreateRenderTarget2D(this, ViewportX / 2.0 * 1.2, ViewportY);
 		SceneCaptureLeft->TextureTarget = RenderTargetLeft;
 		SceneCaptureLeft->HiddenActors.Add(this);
 
-		RenderTargetRight = UKismetRenderingLibrary::CreateRenderTarget2D(this, ViewportX / 2, ViewportY);
+		RenderTargetRight = UKismetRenderingLibrary::CreateRenderTarget2D(this, ViewportX / 2.0 * 1.2, ViewportY);
 		SceneCaptureRight->TextureTarget = RenderTargetRight;
 		SceneCaptureRight->HiddenActors.Add(this);
 
-		if (PictureMaterialLeft)
+		SceneCaptureLeft->ClipPlaneBase = SceneCaptureRight->ClipPlaneBase = GetActorLocation();
+		SceneCaptureLeft->ClipPlaneNormal = SceneCaptureRight->ClipPlaneNormal = GetActorForwardVector();
+
+		float FOV = GetFOVForCaptureComponents(Player);
+		SceneCaptureLeft->FOVAngle = FOV;
+		SceneCaptureRight->FOVAngle = FOV;
+
+		if (PictureMaterialLeft && PictureMaterialRight)
 		{
 			UMaterialInstanceDynamic* DynamicMaterialLeft = UMaterialInstanceDynamic::Create(PictureMaterialLeft, this);
 			DynamicMaterialLeft->SetTextureParameterValue(PictureTextureParameterName, RenderTargetLeft);
@@ -69,32 +73,10 @@ void AMagicPictureFrame::BeginPlay()
 
 			PictureMeshRight->SetMaterial(0, DynamicMaterialRight);
 
-			FVector CamLocation = Player->PlayerCameraManager->GetCameraLocation();
-			FRotator CamRotation = Player->PlayerCameraManager->GetCameraRotation();
-			FVector CamRightVector = Player->PlayerCameraManager->GetActorRightVector();
-
-			FTransform CameraTransformLeft = FTransform(CamRotation, CamLocation - CamRightVector * EyeDistanceFromCenter);
-			UpdatePortalVPMParameters(SceneCaptureLeft, DynamicMaterialLeft, CameraTransformLeft);
-
-			FTransform CameraTransformRight = FTransform(CamRotation, CamLocation + CamRightVector * EyeDistanceFromCenter);
-			UpdatePortalVPMParameters(SceneCaptureRight, DynamicMaterialRight, CameraTransformRight);
+			MIDLeft = DynamicMaterialLeft;
+			MIDRight = DynamicMaterialRight;
 		}
 	}
-}
-
-void AMagicPictureFrame::UpdateCaptureComponent()
-{
-	FVector CamLocation = Player->PlayerCameraManager->GetCameraLocation();
-	FRotator CamRotation = Player->PlayerCameraManager->GetCameraRotation();
-
-	SceneCaptureLeft->SetWorldLocation(CamLocation);
-	SceneCaptureLeft->SetWorldRotation(CamRotation);
-
-	SceneCaptureRight->SetWorldLocation(CamLocation);
-	SceneCaptureRight->SetWorldRotation(CamRotation);
-
-	UE_LOG(LogTemp, Warning, TEXT("Location %s"), *CamLocation.ToCompactString());
-	UE_LOG(LogTemp, Warning, TEXT("Rotation %s"), *CamRotation.ToCompactString());
 }
 
 void AMagicPictureFrame::Tick(float DeltaTime)
@@ -102,6 +84,32 @@ void AMagicPictureFrame::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	UpdateCaptureComponent();
+}
+
+#pragma region Credit for the logic here goes to https://github.com/FreetimeStudio/PortalPlugin
+
+void AMagicPictureFrame::UpdateCaptureComponent()
+{
+	FVector CamLocation = Player->PlayerCameraManager->GetCameraLocation();
+	FRotator CamRotation = Player->PlayerCameraManager->GetCameraRotation();
+	FVector CamRightVector = Player->PlayerCameraManager->GetActorRightVector();
+
+	FVector CamLocationLeft = CamLocation - CamRightVector * EyeDistanceFromCenter;
+	FVector CamLocationRight = CamLocation + CamRightVector * EyeDistanceFromCenter;
+
+	SceneCaptureLeft->SetWorldLocation(CamLocationLeft);
+	SceneCaptureLeft->SetWorldRotation(CamRotation);
+
+	SceneCaptureRight->SetWorldLocation(CamLocationRight);
+	SceneCaptureRight->SetWorldRotation(CamRotation);
+
+	FTransform CameraTransformLeft = FTransform(CamRotation, CamLocationLeft);
+	FTransform CameraTransformRight = FTransform(CamRotation, CamLocationRight);
+	UpdatePortalVPMParameters(SceneCaptureLeft, MIDLeft, CameraTransformLeft);
+	UpdatePortalVPMParameters(SceneCaptureRight, MIDRight, CameraTransformRight);
+
+	UE_LOG(LogTemp, Warning, TEXT("Location %s"), *CamLocation.ToCompactString());
+	UE_LOG(LogTemp, Warning, TEXT("Rotation %s"), *CamRotation.ToCompactString());
 }
 
 //Credit goes to AgentMilkshake1 https://answers.unrealengine.com/questions/234597/screenspace-portals-on-vr.html
@@ -128,7 +136,7 @@ void AMagicPictureFrame::UpdatePortalVPMParameters(USceneCaptureComponent2D* Cap
 		FPlane(1, 0, 0, 0),
 		FPlane(0, 1, 0, 0),
 		FPlane(0, 0, 0, 1));
-	CaptureComponent->FOVAngle = GetFOVForCaptureComponents(Player);
+	CaptureComponent->FOVAngle = GetFOVForCaptureComponents();
 	const float FOV = CaptureComponent->FOVAngle * (float)PI / 360.0f;
 
 	// Build projection matrix
@@ -223,3 +231,5 @@ float AMagicPictureFrame::GetFOVForCaptureComponents(const APlayerController* Fo
 
 	return ResultFOV;
 }
+
+#pragma endregion

@@ -8,6 +8,7 @@
 
 class UStaticMeshComponent;
 class USceneCaptureComponent2D;
+class UMaterialInstanceDynamic;
 
 UCLASS()
 class BRACKEYSJAM2020_API AMagicPictureFrame : public AActor
@@ -61,6 +62,9 @@ private:
 	UTextureRenderTarget2D* RenderTargetLeft;
 	UTextureRenderTarget2D* RenderTargetRight;
 
+	UMaterialInstanceDynamic* MIDLeft;
+	UMaterialInstanceDynamic* MIDRight;
+
 	APlayerController* Player;
 
 	// State
@@ -72,4 +76,6 @@ private:
 	void UpdateCaptureComponent();
 	void UpdatePortalVPMParameters(USceneCaptureComponent2D* CaptureComponent, UMaterialInstanceDynamic* MaterialInstance, const FTransform& CameraTransform);
 	float GetFOVForCaptureComponents(const APlayerController* ForPlayerController = nullptr);
+	static void UpdateCaptureComponentClipplane(USceneCaptureComponent2D* CaptureComponent, const USceneComponent* TargetPortal, float ClipOffset = -5.0f);
+	static void UpdateCaptureComponentClipPlaneTransform(USceneCaptureComponent2D* CaptureComponent, const FTransform& TargetPortal, float ClipOffset = -5.0f);
 };
