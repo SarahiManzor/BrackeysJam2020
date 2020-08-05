@@ -67,6 +67,8 @@ private:
 
 	APlayerController* Player;
 
+	TArray<AActor*> HiddenActors;
+
 	// State
 
 // ----------Custom Functions----------
@@ -76,6 +78,6 @@ private:
 	void UpdateCaptureComponent();
 	void UpdatePortalVPMParameters(USceneCaptureComponent2D* CaptureComponent, UMaterialInstanceDynamic* MaterialInstance, const FTransform& CameraTransform);
 	float GetFOVForCaptureComponents(const APlayerController* ForPlayerController = nullptr);
-	static void UpdateCaptureComponentClipplane(USceneCaptureComponent2D* CaptureComponent, const USceneComponent* TargetPortal, float ClipOffset = -5.0f);
-	static void UpdateCaptureComponentClipPlaneTransform(USceneCaptureComponent2D* CaptureComponent, const FTransform& TargetPortal, float ClipOffset = -5.0f);
+
+	void UpdateHiddenActors();
 };

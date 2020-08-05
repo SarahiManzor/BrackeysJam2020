@@ -10,7 +10,8 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "IXRTrackingSystem.h"
 #include "IHeadMountedDisplay.h"
-#include "Engine/LocalPlayer.h"
+#include "Engine/LocalPlayer.h" 
+#include "DrawDebugHelpers.h"
 
 AMagicPictureFrame::AMagicPictureFrame()
 {
@@ -73,6 +74,19 @@ void AMagicPictureFrame::BeginPlay()
 			MIDLeft = DynamicMaterialLeft;
 			MIDRight = DynamicMaterialRight;
 		}
+
+		TArray<AActor*> FoundActors;
+		UGameplayStatics::GetAllActorsOfClass(GetWorld(), AActor::StaticClass(), FoundActors);
+		for (AActor* Actor : FoundActors)
+		{
+			if (Actor->Tags.Contains(TEXT("Hidden")))
+			{
+				Player->HiddenActors.Add(Actor);
+				HiddenActors.Add(Actor);
+			}
+		}
+		HiddenActors.Append(SceneCaptureLeft->HiddenActors);
+		HiddenActors.Remove(this);
 	}
 }
 
@@ -81,6 +95,7 @@ void AMagicPictureFrame::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	UpdateCaptureComponent();
+	UpdateHiddenActors();
 }
 
 #pragma region Credit for the logic here goes to https://github.com/FreetimeStudio/PortalPlugin
@@ -112,9 +127,6 @@ void AMagicPictureFrame::UpdateCaptureComponent()
 	FTransform CameraTransformRight = FTransform(CamRotation, CamLocationRight);
 	UpdatePortalVPMParameters(SceneCaptureLeft, MIDLeft, CameraTransformLeft);
 	UpdatePortalVPMParameters(SceneCaptureRight, MIDRight, CameraTransformRight);
-
-	UE_LOG(LogTemp, Warning, TEXT("Location %s"), *CamLocation.ToCompactString());
-	UE_LOG(LogTemp, Warning, TEXT("Rotation %s"), *CamRotation.ToCompactString());
 }
 
 //Credit goes to AgentMilkshake1 https://answers.unrealengine.com/questions/234597/screenspace-portals-on-vr.html
@@ -238,3 +250,20 @@ float AMagicPictureFrame::GetFOVForCaptureComponents(const APlayerController* Fo
 }
 
 #pragma endregion
+
+void AMagicPictureFrame::UpdateHiddenActors()
+{
+	for (AActor* Actor : HiddenActors)
+	{
+		FVector RayStart = Player->PlayerCameraManager->GetCameraLocation();
+		FVector RayEnd = Actor->GetActorLocation();
+		UStaticMeshComponent* Mesh = Cast<UStaticMeshComponent>(Actor->GetComponentByClass(UStaticMeshComponent::StaticClass()));
+
+		FHitResult Hit;
+		GetWorld()->LineTraceSingleByChannel(Hit, RayStart, RayEnd, ECollisionChannel::ECC_GameTraceChannel2);
+		
+		bool Collision = ((Hit.GetActor() == this) ^ SceneCaptureLeft->HiddenActors.Contains(Actor));
+		Mesh->SetCollisionEnabled(Collision ? ECollisionEnabled::QueryAndPhysics : ECollisionEnabled::NoCollision);
+		UE_LOG(LogTemp, Warning, TEXT("%s : %s"), *Actor->GetName(), Collision ? *Actor->GetName() : *GetName());
+	}
+}
