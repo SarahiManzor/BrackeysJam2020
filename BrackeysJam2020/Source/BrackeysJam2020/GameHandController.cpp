@@ -28,8 +28,8 @@ void AGameHandController::BeginPlay()
 {
 	Super::BeginPlay();
 
-	ControllerMesh->OnComponentBeginOverlap.AddDynamic(this, &AGameHandController::OnComponentBeginOverlap);
-	ControllerMesh->OnComponentEndOverlap.AddDynamic(this, &AGameHandController::OnComponentEndOverlap);
+	//ControllerMesh->OnComponentBeginOverlap.AddDynamic(this, &AGameHandController::OnComponentBeginOverlap);
+	//ControllerMesh->OnComponentEndOverlap.AddDynamic(this, &AGameHandController::OnComponentEndOverlap);
 
 	TArray<AActor*> FoundActors;
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AActor::StaticClass(), FoundActors);
@@ -168,6 +168,21 @@ void AGameHandController::UpdateRewindVisual()
 					Tracker->AddHighlight();
 				}
 				OverlappedStateTracker = Tracker; // nullptr if cast failed which is good
+
+				UPrimitiveComponent* OtherComp = Cast<UPrimitiveComponent>(HitResult.GetActor()->GetComponentByClass(UPrimitiveComponent::StaticClass()));
+				if (OtherComp->Mobility == EComponentMobility::Movable && !HitResult.GetActor()->Tags.Contains("NoGrab"))
+				{
+					OverlappedComponent = OtherComp;
+					OverlappedActor = HitResult.GetActor();
+
+					if (bTryingGrab && !HeldActor)
+						Grab();
+				}
+				else
+				{
+					OverlappedActor = nullptr;
+					OverlappedComponent = nullptr;
+				}
 			}
 		}
 	}

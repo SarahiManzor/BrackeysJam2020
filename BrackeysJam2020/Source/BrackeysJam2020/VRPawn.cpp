@@ -196,9 +196,9 @@ void AVRPawn::UpdateTeleportMarker()
 	UGameplayStatics::PredictProjectilePath(this, PredictParams, Results);
 	FHitResult Hit = Results.HitResult;
 
+	UE_LOG(LogTemp, Warning, TEXT("Hit: %s"), *Hit.GetComponent()->GetName());
 	if (Hit.GetActor() && Hit.GetActor()->GetName().Contains("Magic"))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Hit: %s"), *Hit.GetActor()->GetName());
 		PredictParams = FPredictProjectilePathParams(1.0f, ControllerLocation, TeleportingHand->ControllerMesh->GetForwardVector() * TeleportRangeVelocity, 2.0f, ECC_GameTraceChannel3);
 		UGameplayStatics::PredictProjectilePath(this, PredictParams, Results);
 		Hit = Results.HitResult;
