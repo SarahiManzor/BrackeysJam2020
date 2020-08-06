@@ -136,30 +136,39 @@ void AGameHandController::UpdateRewindVisual()
 	// Check for object that can be rewinded
 	FVector ControllerLocation = ControllerMesh->GetComponentLocation();
 	FVector ControllerForward = ControllerMesh->GetForwardVector();
-	FVector TargetLocation = FVector::ZeroVector;
+	FVector TargetLocation = ControllerLocation + ControllerForward * 10000.0;
 	if (!RewindStateTracker)
 	{
 		FHitResult HitResult;
-		GetWorld()->LineTraceSingleByChannel(HitResult, ControllerLocation, ControllerLocation + ControllerForward * 10000.0, ECC_Visibility);
+		GetWorld()->LineTraceSingleByChannel(HitResult, ControllerLocation, TargetLocation , ECC_GameTraceChannel4);
 		if (HitResult.GetActor())
 		{
-			TargetLocation = HitResult.Location;
+			if (HitResult.GetActor()->GetName().Contains("Magic"))
+			{
+				GetWorld()->LineTraceSingleByChannel(HitResult, ControllerLocation, TargetLocation, ECC_GameTraceChannel3);
+			}
+
 			BeamParticles->SetFloatParameter(TEXT("ColourAlpha"), 0.01);
 			BeamParticles->SetVectorParameter(TEXT("Colour"), FVector(1.0, 1.0, 0.0));
 
-			UStateTracker* Tracker = Cast<UStateTracker>(HitResult.GetActor()->GetComponentByClass(UStateTracker::StaticClass()));
-			
-			if (OverlappedStateTracker != nullptr && Tracker != OverlappedStateTracker)
+			if (HitResult.GetActor())
 			{
-				// Remove highlight from already highlighted tracker
-				OverlappedStateTracker->RemoveHighlight();
+				TargetLocation = HitResult.Location;
+
+				UStateTracker* Tracker = Cast<UStateTracker>(HitResult.GetActor()->GetComponentByClass(UStateTracker::StaticClass()));
+
+				if (OverlappedStateTracker != nullptr && Tracker != OverlappedStateTracker)
+				{
+					// Remove highlight from already highlighted tracker
+					OverlappedStateTracker->RemoveHighlight();
+				}
+				else if (Tracker != nullptr)
+				{
+					// Add Highlight to new object
+					Tracker->AddHighlight();
+				}
+				OverlappedStateTracker = Tracker; // nullptr if cast failed which is good
 			}
-			else if (Tracker != nullptr)
-			{
-				// Add Highlight to new object
-				Tracker->AddHighlight();
-			}
-			OverlappedStateTracker = Tracker; // nullptr if cast failed which is good
 		}
 	}
 	else

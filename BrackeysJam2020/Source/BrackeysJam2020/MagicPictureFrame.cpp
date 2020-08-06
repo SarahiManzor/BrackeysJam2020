@@ -101,7 +101,7 @@ void AMagicPictureFrame::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	UpdateCaptureComponent();
-	UpdateHiddenActors();
+	//UpdateHiddenActors();
 }
 
 #pragma region Credit for the logic here goes to https://github.com/FreetimeStudio/PortalPlugin
@@ -270,6 +270,6 @@ void AMagicPictureFrame::UpdateHiddenActors()
 		
 		bool Collision = ((Hit.GetActor() == this) ^ SceneCaptureLeft->HiddenActors.Contains(Actor));
 		Mesh->SetCollisionEnabled(Collision ? ECollisionEnabled::QueryAndPhysics : ECollisionEnabled::NoCollision);
-		UE_LOG(LogTemp, Warning, TEXT("%s : %s"), *Actor->GetName(), Collision ? *Actor->GetName() : *GetName());
+		//UE_LOG(LogTemp, Warning, TEXT("%s : %s"), *Actor->GetName(), Collision ? *Actor->GetName() : *GetName());
 	}
 }
