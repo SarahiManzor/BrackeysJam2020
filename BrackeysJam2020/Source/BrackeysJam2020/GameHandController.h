@@ -36,7 +36,7 @@ private:
 	// References
 	AActor* HeldActor;
 	UPrimitiveComponent* HeldComponent;
-	FVector HoldLocation;
+	FVector RelativeHoldLocation;
 
 	AActor* OverlappedActor;
 	UPrimitiveComponent* OverlappedComponent;

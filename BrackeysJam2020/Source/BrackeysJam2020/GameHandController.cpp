@@ -48,9 +48,24 @@ void AGameHandController::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	UpdateRewindVisual();
-	if (bSelectingRewind)
-		ManageRewind();
+	if (!HeldActor)
+	{
+		UpdateRewindVisual();
+		if (bSelectingRewind)
+			ManageRewind();
+	}
+	else
+	{
+		BeamParticles->SetFloatParameter(TEXT("ColourAlpha"), 1.0);
+		BeamParticles->SetVectorParameter(TEXT("Colour"), FVector(0.0, 0.0, 20.0));
+
+		FVector ControllerLocation = ControllerMesh->GetComponentLocation();
+		FVector ControllerForward = ControllerMesh->GetForwardVector();
+		FVector TargetLocation = HeldActor->GetTransform().TransformPosition(RelativeHoldLocation);
+		BeamParticles->SetVectorParameter(TEXT("SourceLocation"), ControllerLocation);
+		BeamParticles->SetVectorParameter(TEXT("TargetLocation"), TargetLocation);
+		BeamParticles->SetVectorParameter(TEXT("SourceTangent"), ControllerForward * FVector::Dist(TargetLocation, ControllerLocation) * 0.1);
+	}
 }
 
 bool AGameHandController::CanTeleport()
@@ -117,8 +132,14 @@ void AGameHandController::ThumbStickY(float AxisValue)
 
 	if (HeldActor)
 	{
-		FVector Direction = HoldLocation - ControllerMesh->GetComponentLocation();
-		HeldActor->SetActorLocation(HeldActor->GetActorLocation() + Direction * AxisValue * 0.05f);
+		FVector Direction = HeldActor->GetTransform().TransformPosition(RelativeHoldLocation) - ControllerMesh->GetComponentLocation();
+		float Distance = Direction.Size();
+		if (!(Distance < 2.0f && AxisValue < 0.0))
+		{
+			Direction.Normalize();
+			FVector Offset = Direction * FMath::Sqrt(Distance) * 0.5 * AxisValue;
+			HeldActor->SetActorLocation(HeldActor->GetActorLocation() + Offset);
+		}
 	}
 }
 
@@ -191,7 +212,7 @@ void AGameHandController::UpdateRewindVisual()
 				{
 					OverlappedComponent = OtherComp;
 					OverlappedActor = HitResult.GetActor();
-					HoldLocation = HitResult.Location;
+					RelativeHoldLocation = OverlappedActor->GetTransform().InverseTransformPosition(HitResult.Location);
 
 					if (bTryingGrab && !HeldActor)
 						Grab();
