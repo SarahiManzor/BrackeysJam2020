@@ -36,6 +36,7 @@ private:
 	// References
 	AActor* HeldActor;
 	UPrimitiveComponent* HeldComponent;
+	FVector HoldLocation;
 
 	AActor* OverlappedActor;
 	UPrimitiveComponent* OverlappedComponent;
@@ -52,11 +53,15 @@ private:
 
 // ----------Custom Functions----------
 public:
+	virtual bool CanTeleport() override;
+
 	virtual void Grab() override;
 	virtual void Release() override;
 
 	virtual void TriggerPressed() override;
 	virtual void TriggerReleased() override;
+
+	virtual void ThumbStickY(float AxisValue) override;
 protected:
 private:
 	UFUNCTION()

@@ -28,6 +28,7 @@ AVRPawn::AVRPawn()
 	bSelectingTeleport = false;
 	TeleportRangeVelocity = 500.0f;
 	PlayerHeight = 0.9f;
+	TeleportThreshold = 0.1f;
 }
 
 // Called when the game starts or when spawned
@@ -81,11 +82,8 @@ void AVRPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 	PlayerInputComponent->BindAction(TEXT("RightGrab"), IE_Pressed, this, &AVRPawn::GrabButtonPressedRight);
 	PlayerInputComponent->BindAction(TEXT("RightGrab"), IE_Released, this, &AVRPawn::GrabButtonReleasedRight);
 
-	PlayerInputComponent->BindAction(TEXT("LeftTeleport"), IE_Pressed, this, &AVRPawn::TeleportButtonPressedLeft);
-	PlayerInputComponent->BindAction(TEXT("LeftTeleport"), IE_Released, this, &AVRPawn::TeleportButtonReleasedLeft);
-
-	PlayerInputComponent->BindAction(TEXT("RightTeleport"), IE_Pressed, this, &AVRPawn::TeleportButtonPressedRight);
-	PlayerInputComponent->BindAction(TEXT("RightTeleport"), IE_Released, this, &AVRPawn::TeleportButtonReleasedRight);
+	PlayerInputComponent->BindAxis(TEXT("ThumbStickLeftY"), this, &AVRPawn::ThumbStickLeftY);
+	PlayerInputComponent->BindAxis(TEXT("ThumbStickRightY"), this, &AVRPawn::ThumbStickRightY);
 
 	PlayerInputComponent->BindAction(TEXT("LeftRewind"), IE_Pressed, this, &AVRPawn::RewindButtonPressedLeft);
 	PlayerInputComponent->BindAction(TEXT("LeftRewind"), IE_Released, this, &AVRPawn::RewindButtonReleasedLeft);
@@ -119,32 +117,46 @@ void AVRPawn::GrabButtonReleasedRight()
 	RightHandController->Release();
 }
 
-void AVRPawn::TeleportButtonPressedLeft()
+void AVRPawn::ThumbStickLeftY(float AxisValue)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Teleport Pressed Left"));
-	TeleportingHand = LeftHandController;
-	bSelectingTeleport = true;
+	if (!LeftHandController->CanTeleport())
+	{
+		LeftHandController->ThumbStickY(AxisValue);
+		return;
+	}
+	if (AxisValue > TeleportThreshold)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Teleport Pressed Left"));
+		TeleportingHand = LeftHandController;
+		bSelectingTeleport = true;
+	}
+	else if (TeleportingHand == LeftHandController)
+	{
+		StartTeleport();
+		TeleportingHand = nullptr;
+		bSelectingTeleport = false;
+	}
 }
 
-void AVRPawn::TeleportButtonReleasedLeft()
+void AVRPawn::ThumbStickRightY(float AxisValue)
 {
-	StartTeleport();
-	TeleportingHand = nullptr;
-	bSelectingTeleport = false;
-}
-
-void AVRPawn::TeleportButtonPressedRight()
-{
-	UE_LOG(LogTemp, Warning, TEXT("Teleport Pressed Right"));
-	TeleportingHand = RightHandController;
-	bSelectingTeleport = true;
-}
-
-void AVRPawn::TeleportButtonReleasedRight()
-{
-	StartTeleport();
-	TeleportingHand = nullptr;
-	bSelectingTeleport = false;
+	if (!RightHandController->CanTeleport())
+	{
+		RightHandController->ThumbStickY(AxisValue);
+		return;
+	}
+	if (AxisValue > TeleportThreshold)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Teleport Pressed Right"));
+		TeleportingHand = RightHandController;
+		bSelectingTeleport = true;
+	}
+	else if (TeleportingHand == RightHandController)
+	{
+		StartTeleport();
+		TeleportingHand = nullptr;
+		bSelectingTeleport = false;
+	}
 }
 
 void AVRPawn::RewindButtonPressedLeft()

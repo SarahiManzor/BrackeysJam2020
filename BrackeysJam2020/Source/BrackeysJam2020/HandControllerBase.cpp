@@ -14,6 +14,8 @@ AHandControllerBase::AHandControllerBase()
 
 	ControllerMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
 	ControllerMesh->SetupAttachment(MotionController);
+
+	bCanTeleport = true;
 }
 
 // Called when the game starts or when spawned
@@ -27,6 +29,11 @@ void AHandControllerBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+}
+
+bool AHandControllerBase::CanTeleport()
+{
+	return bCanTeleport;
 }
 
 void AHandControllerBase::SetTrackingSource(EControllerHand Hand)
@@ -43,6 +50,11 @@ void AHandControllerBase::Grab()
 }
 
 void AHandControllerBase::Release()
+{
+
+}
+
+void AHandControllerBase::ThumbStickY(float AxisValue)
 {
 
 }

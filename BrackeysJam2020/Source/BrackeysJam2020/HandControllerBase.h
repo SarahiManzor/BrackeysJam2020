@@ -34,13 +34,19 @@ public:
 
 protected:
 private:
+	bool bCanTeleport;
 
 	// ----------Custom Functions----------
 public:
+	virtual bool CanTeleport();
+
 	void SetTrackingSource(EControllerHand Hand);
 
 	virtual void Grab();
 	virtual void Release();
+
+
+	virtual void ThumbStickY(float AxisValue);
 
 	virtual void TriggerPressed();
 	virtual void TriggerReleased();

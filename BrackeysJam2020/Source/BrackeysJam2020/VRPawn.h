@@ -45,6 +45,8 @@ private:
 	UPROPERTY(EditAnywhere)
 	float PlayerHeight;
 
+	float TeleportThreshold;
+
 	// Components
 	UPROPERTY(VisibleAnywhere)
 	USceneComponent* Root;
@@ -89,11 +91,8 @@ private:
 	void GrabButtonPressedRight();
 	void GrabButtonReleasedRight();
 
-	void TeleportButtonPressedLeft();
-	void TeleportButtonReleasedLeft();
-
-	void TeleportButtonPressedRight();
-	void TeleportButtonReleasedRight();
+	void ThumbStickLeftY(float AxisValue);
+	void ThumbStickRightY(float AxisValue);
 	
 	void RewindButtonPressedLeft();
 	void RewindButtonReleasedLeft();

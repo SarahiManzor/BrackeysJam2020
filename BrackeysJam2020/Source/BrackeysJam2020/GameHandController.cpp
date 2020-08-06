@@ -19,6 +19,7 @@ AGameHandController::AGameHandController()
 	RewindStateTracker = nullptr;
 	bTryingGrab = false;
 	bSelectingRewind = false;
+	HeldActor = nullptr;
 
 	BeamParticles = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("BeamParticles"));
 	BeamParticles->SetupAttachment(ControllerMesh);
@@ -50,6 +51,11 @@ void AGameHandController::Tick(float DeltaTime)
 	UpdateRewindVisual();
 	if (bSelectingRewind)
 		ManageRewind();
+}
+
+bool AGameHandController::CanTeleport()
+{
+	return !(bSelectingRewind || bTryingGrab);
 }
 
 void AGameHandController::Grab()
@@ -103,6 +109,17 @@ void AGameHandController::TriggerReleased()
 	RewindStateTracker->RemoveHighlight();
 	RewindStateTracker->Play();
 	RewindStateTracker = nullptr;
+}
+
+void AGameHandController::ThumbStickY(float AxisValue)
+{
+	UE_LOG(LogTemp, Warning, TEXT("Move: %f"), AxisValue);
+
+	if (HeldActor)
+	{
+		FVector Direction = HoldLocation - ControllerMesh->GetComponentLocation();
+		HeldActor->SetActorLocation(HeldActor->GetActorLocation() + Direction * AxisValue * 0.05f);
+	}
 }
 
 void AGameHandController::OnComponentBeginOverlap(class UPrimitiveComponent* OverlappedComp, class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -174,6 +191,7 @@ void AGameHandController::UpdateRewindVisual()
 				{
 					OverlappedComponent = OtherComp;
 					OverlappedActor = HitResult.GetActor();
+					HoldLocation = HitResult.Location;
 
 					if (bTryingGrab && !HeldActor)
 						Grab();
