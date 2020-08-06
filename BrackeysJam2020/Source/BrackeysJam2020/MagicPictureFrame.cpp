@@ -79,12 +79,12 @@ void AMagicPictureFrame::BeginPlay()
 		UGameplayStatics::GetAllActorsOfClass(GetWorld(), AActor::StaticClass(), FoundActors);
 		for (AActor* Actor : FoundActors)
 		{
-			if (Actor->Tags.Contains(TEXT("Hidden")))
+			if (Actor->Tags.Contains(TEXT("Past")))
 			{
 				Player->HiddenActors.Add(Actor);
 				HiddenActors.Add(Actor);
 			}
-			else if(Actor->Tags.Contains(TEXT("Visible")))
+			else if(Actor->Tags.Contains(TEXT("Present")))
 			{
 				HiddenActors.Add(Actor);
 				SceneCaptureLeft->HiddenActors.Add(Actor);
