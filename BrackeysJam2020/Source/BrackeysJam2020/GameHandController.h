@@ -34,11 +34,20 @@ private:
 	UParticleSystemComponent* BeamParticles;
 
 	// References
-	AActor* HeldActor;
 	UPrimitiveComponent* HeldComponent;
-	FVector RelativeHoldLocation;
-
+	FVector HeldComponentPreviousLocation; // Relative to controller
+	FVector HeldActorLocation; // Relative to controller
+	AActor* HeldActor;
 	AActor* OverlappedActor;
+	bool bHeldHasGravity;
+	float HeldLinearDamping;
+	float HeldAngularDamping;
+	bool HeldComponentUsingMass;
+	float HeldComponentMass;
+	bool bInHand;
+
+	float LastYAxisVal;
+
 	UPrimitiveComponent* OverlappedComponent;
 
 	UStateTracker* OverlappedStateTracker;

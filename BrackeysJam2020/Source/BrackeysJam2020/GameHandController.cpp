@@ -15,11 +15,12 @@ AGameHandController::AGameHandController()
 	PrimaryActorTick.bCanEverTick = true;
 
 	OverlappedStateTracker = nullptr;
-	OverlappedActor = nullptr;
 	RewindStateTracker = nullptr;
 	bTryingGrab = false;
 	bSelectingRewind = false;
-	HeldActor = nullptr;
+	HeldComponent = nullptr;
+	bInHand = false;
+	LastYAxisVal = 0.0f;
 
 	BeamParticles = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("BeamParticles"));
 	BeamParticles->SetupAttachment(ControllerMesh);
@@ -29,8 +30,8 @@ void AGameHandController::BeginPlay()
 {
 	Super::BeginPlay();
 
-	//ControllerMesh->OnComponentBeginOverlap.AddDynamic(this, &AGameHandController::OnComponentBeginOverlap);
-	//ControllerMesh->OnComponentEndOverlap.AddDynamic(this, &AGameHandController::OnComponentEndOverlap);
+	ControllerMesh->OnComponentBeginOverlap.AddDynamic(this, &AGameHandController::OnComponentBeginOverlap);
+	ControllerMesh->OnComponentEndOverlap.AddDynamic(this, &AGameHandController::OnComponentEndOverlap);
 
 	TArray<AActor*> FoundActors;
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AActor::StaticClass(), FoundActors);
@@ -48,7 +49,7 @@ void AGameHandController::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (!HeldActor)
+	if (!HeldComponent)
 	{
 		UpdateRewindVisual();
 		if (bSelectingRewind)
@@ -61,7 +62,7 @@ void AGameHandController::Tick(float DeltaTime)
 
 		FVector ControllerLocation = ControllerMesh->GetComponentLocation();
 		FVector ControllerForward = ControllerMesh->GetForwardVector();
-		FVector TargetLocation = HeldActor->GetTransform().TransformPosition(RelativeHoldLocation);
+		FVector TargetLocation = ControllerMesh->GetComponentTransform().TransformPosition(HeldComponentPreviousLocation);
 		BeamParticles->SetVectorParameter(TEXT("SourceLocation"), ControllerLocation);
 		BeamParticles->SetVectorParameter(TEXT("TargetLocation"), TargetLocation);
 		BeamParticles->SetVectorParameter(TEXT("SourceTangent"), ControllerForward * FVector::Dist(TargetLocation, ControllerLocation) * 0.1);
@@ -77,16 +78,20 @@ void AGameHandController::Grab()
 {
 	bTryingGrab = true;
 	UE_LOG(LogTemp, Warning, TEXT("Grip Pressed"));
-	if (!OverlappedActor || !OverlappedComponent->IsSimulatingPhysics()) return;
+	if (!OverlappedComponent || !OverlappedComponent->IsSimulatingPhysics()) return;
 
-	HeldActor = OverlappedActor;
 	HeldComponent = OverlappedComponent;
 
 	// Nullify actor physics
-	HeldComponent->SetSimulatePhysics(false);
+	bHeldHasGravity = HeldComponent->IsGravityEnabled();
+	HeldLinearDamping = HeldComponent->GetLinearDamping();
+	HeldAngularDamping = HeldComponent->GetAngularDamping();
+	HeldComponentMass = HeldComponent->GetMass();
 
-	HeldActor->SetOwner(this);
-	HeldActor->AttachToComponent(ControllerMesh, FAttachmentTransformRules::KeepWorldTransform);
+	HeldComponent->SetEnableGravity(false);
+	HeldComponent->SetLinearDamping(10.0);
+	HeldComponent->SetAngularDamping(10.0);
+	HeldComponent->SetMassOverrideInKg(NAME_None, 10.0f, true);
 
 	UE_LOG(LogTemp, Warning, TEXT("Block held"));
 }
@@ -95,17 +100,18 @@ void AGameHandController::Release()
 {
 	bTryingGrab = false;
 	UE_LOG(LogTemp, Warning, TEXT("Grip Released"));
-	if (!HeldActor) return;
 
 	// Restore held actor physics
-	if (HeldActor->GetOwner() == this)
+	if (HeldComponent)
 	{
+		HeldComponent->SetEnableGravity(bHeldHasGravity);
+		HeldComponent->SetLinearDamping(HeldLinearDamping);
+		HeldComponent->SetAngularDamping(HeldAngularDamping);
+		HeldComponent->SetMassOverrideInKg(NAME_None, HeldComponentMass, true);
 		HeldComponent->SetSimulatePhysics(true);
-		HeldActor->SetOwner(nullptr);
-		HeldActor->AttachToComponent(nullptr, FAttachmentTransformRules::KeepWorldTransform);
 	}
-
-	HeldActor = nullptr;
+	HeldComponent = nullptr;
+	bInHand = false;
 }
 
 void AGameHandController::TriggerPressed()
@@ -128,45 +134,87 @@ void AGameHandController::TriggerReleased()
 
 void AGameHandController::ThumbStickY(float AxisValue)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Move: %f"), AxisValue);
-
-	if (HeldActor)
+	LastYAxisVal = AxisValue;
+	if (HeldComponent && (!bInHand || AxisValue > 0.1f))
 	{
-		FVector Direction = HeldActor->GetTransform().TransformPosition(RelativeHoldLocation) - ControllerMesh->GetComponentLocation();
-		float Distance = Direction.Size();
-		if (!(Distance < 2.0f && AxisValue < 0.0))
+		if (bInHand)
 		{
-			Direction.Normalize();
-			FVector Offset = Direction * FMath::Sqrt(Distance) * 0.5 * AxisValue;
-			HeldActor->SetActorLocation(HeldActor->GetActorLocation() + Offset);
+			UE_LOG(LogTemp, Warning, TEXT("Unhanded"));
+			bInHand = false;
+			HeldActor->SetOwner(nullptr);
+			HeldActor->AttachToComponent(nullptr, FAttachmentTransformRules::KeepWorldTransform);
+			HeldComponent->SetSimulatePhysics(true);
 		}
+		FVector TargetWorldLocation = ControllerMesh->GetComponentTransform().TransformPosition(HeldActorLocation);
+
+		FVector PreviousLocation = HeldComponent->GetComponentLocation();
+		HeldComponentPreviousLocation = ControllerMesh->GetComponentTransform().InverseTransformPosition(PreviousLocation);
+		HeldComponent->SetPhysicsLinearVelocity(FVector::ZeroVector);
+		HeldComponent->SetPhysicsAngularVelocityInDegrees(FVector::ZeroVector);
+
+		FVector DirPrevToTarget = TargetWorldLocation - PreviousLocation;
+		DirPrevToTarget.Normalize();
+
+		float Offset = (TargetWorldLocation - PreviousLocation).Size();
+
+		FVector NewLocation = PreviousLocation;
+		NewLocation += DirPrevToTarget * FMath::Sqrt(Offset);
+
+		FVector DirControllerToComponent = ControllerMesh->GetComponentTransform().TransformPosition(HeldActorLocation) - ControllerMesh->GetComponentLocation();
+		FVector DirControllerToNewTarget = (NewLocation - ControllerMesh->GetComponentLocation()).GetSafeNormal();
+		float PrevDistance = (ControllerMesh->GetComponentTransform().TransformPosition(HeldActorLocation) - ControllerMesh->GetComponentLocation()).Size();
+
+		if (!(PrevDistance < 2.0f && AxisValue <= 0.0))
+		{
+			NewLocation += DirControllerToComponent.GetSafeNormal() * FMath::Sqrt(PrevDistance) * 0.5 * AxisValue;
+
+			float NewDistance = FMath::Min(PrevDistance + FMath::Sqrt(PrevDistance) * 0.5f * AxisValue, 500.0f);
+			NewLocation = ControllerMesh->GetComponentLocation() + DirControllerToNewTarget * NewDistance;
+			HeldActorLocation = ControllerMesh->GetComponentTransform().InverseTransformPosition(ControllerMesh->GetComponentLocation() + DirControllerToComponent.GetSafeNormal() * NewDistance);
+		}
+
+		FVector ToTarget = NewLocation - PreviousLocation;
+		if (ToTarget.Size() < 1.0f && FMath::Abs(AxisValue) < 0.1)
+		{
+			return;
+		}
+
+		FVector Impulse = ToTarget * (FMath::Pow(ToTarget.Size(), 2.0) / ToTarget.Size()) * 40.0f;
+		float MaxImpulse = 25000.0f;
+		if (Impulse.Size() > MaxImpulse)
+		{
+			Impulse = Impulse.GetSafeNormal() * MaxImpulse;
+		}
+		HeldComponent->AddImpulse(Impulse);
+		//UE_LOG(LogTemp, Warning, TEXT("Impulse: %f"), Impulse.Size());
 	}
 }
 
 void AGameHandController::OnComponentBeginOverlap(class UPrimitiveComponent* OverlappedComp, class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Overlap begin: %s"), *OtherActor->GetName());
-
-	if (OtherComp->GetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn) == ECR_Overlap)
+	UE_LOG(LogTemp, Warning, TEXT("Overlap: %s"), *OtherActor->GetName());
+	OverlappedActor = OtherActor;
+	if (OtherComp == HeldComponent && !bInHand && LastYAxisVal < 0.01f)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("With block!"));
-		OverlappedComponent = OtherComp;
-		OverlappedActor = OtherActor;
-
-		if (bTryingGrab && !HeldActor)
-			Grab();
+		UE_LOG(LogTemp, Warning, TEXT("In hand begin: %s"), *OtherActor->GetName());
+		bInHand = true;
+		HeldComponent->SetSimulatePhysics(false);
+		HeldActor = OtherActor;
+		HeldActor->SetOwner(this);
+		HeldActor->AttachToComponent(ControllerMesh, FAttachmentTransformRules::KeepWorldTransform);
 	}
 }
 
 void AGameHandController::OnComponentEndOverlap(class UPrimitiveComponent* OverlappedComp, class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Overlap end: %s"), *OtherActor->GetName());
+	if (OtherActor == OverlappedActor) OverlappedActor = nullptr;
+	/*UE_LOG(LogTemp, Warning, TEXT("Overlap end: %s"), *OtherActor->GetName());
 
 	if (OverlappedActor == OtherActor)
 	{
 		OverlappedActor = nullptr;
 		OverlappedComponent = nullptr;
-	}
+	}*/
 }
 
 void AGameHandController::UpdateRewindVisual()
@@ -181,7 +229,7 @@ void AGameHandController::UpdateRewindVisual()
 		GetWorld()->LineTraceSingleByChannel(HitResult, ControllerLocation, TargetLocation , ECC_GameTraceChannel4);
 		if (HitResult.GetActor())
 		{
-			if (HitResult.GetActor()->GetName().Contains("Magic"))
+			if (HitResult.GetComponent()->GetName().Contains("Picture"))
 			{
 				GetWorld()->LineTraceSingleByChannel(HitResult, ControllerLocation, TargetLocation, ECC_GameTraceChannel3);
 			}
@@ -211,15 +259,22 @@ void AGameHandController::UpdateRewindVisual()
 				if (OtherComp->Mobility == EComponentMobility::Movable && !HitResult.GetActor()->Tags.Contains("NoGrab"))
 				{
 					OverlappedComponent = OtherComp;
-					OverlappedActor = HitResult.GetActor();
-					RelativeHoldLocation = OverlappedActor->GetTransform().InverseTransformPosition(HitResult.Location);
+					HeldActorLocation = ControllerMesh->GetComponentTransform().InverseTransformPosition(HitResult.GetActor()->GetActorLocation());
 
-					if (bTryingGrab && !HeldActor)
+					if (bTryingGrab && !HeldComponent)
 						Grab();
+
+					if (HeldComponent && OverlappedActor == HitResult.GetActor() && !bInHand)
+					{
+						bInHand = true;
+						HeldComponent->SetSimulatePhysics(false);
+						HeldActor = OverlappedActor;
+						HeldActor->SetOwner(this);
+						HeldActor->AttachToComponent(ControllerMesh, FAttachmentTransformRules::KeepWorldTransform);
+					}
 				}
 				else
 				{
-					OverlappedActor = nullptr;
 					OverlappedComponent = nullptr;
 				}
 			}
