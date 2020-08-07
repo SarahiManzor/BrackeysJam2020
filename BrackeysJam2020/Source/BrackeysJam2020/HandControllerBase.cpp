@@ -69,3 +69,8 @@ void AHandControllerBase::TriggerReleased()
 
 }
 
+void AHandControllerBase::ThumbstickClickPressed()
+{
+
+}
+

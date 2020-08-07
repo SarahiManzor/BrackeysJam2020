@@ -107,7 +107,7 @@ void UStateTracker::Play()
 	AOrb* Orb = Cast<AOrb>(OwnerMesh->GetOwner());
 	if (Orb)
 	{
-		Orb->AddImpulse();
+		Orb->SetVelocity();
 	}
 }
 

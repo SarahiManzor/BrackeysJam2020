@@ -94,6 +94,10 @@ void AVRPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 	PlayerInputComponent->BindAction(TEXT("LeftRotate"), IE_Pressed, this, &AVRPawn::RotateButtonPressedLeft);
 	PlayerInputComponent->BindAction(TEXT("RightRotate"), IE_Pressed, this, &AVRPawn::RotateButtonPressedRight);
 
+	PlayerInputComponent->BindAction(TEXT("LeftThumbstickClick"), IE_Pressed, this, &AVRPawn::ThumbstickClickPressedLeft);
+	PlayerInputComponent->BindAction(TEXT("RightThumbstickClick"), IE_Pressed, this, &AVRPawn::ThumbstickClickPressedRight);
+
+
 	UE_LOG(LogTemp, Warning, TEXT("Inputs Initialized"));
 }
 
@@ -179,6 +183,18 @@ void AVRPawn::RotateButtonPressedRight()
 	SetActorRotation(GetActorRotation() + FRotator(0.0, 15.0, 0.0));
 }
 
+void AVRPawn::ThumbstickClickPressedLeft()
+{
+	UE_LOG(LogTemp, Warning, TEXT("Trying to teleport but reference to hand is nullptr"));
+	LeftHandController->ThumbstickClickPressed();
+}
+
+void AVRPawn::ThumbstickClickPressedRight()
+{
+	UE_LOG(LogTemp, Warning, TEXT("Trying to teleport but reference to hand is nullptr"));
+	RightHandController->ThumbstickClickPressed();
+}
+
 #pragma endregion
 
 void AVRPawn::UpdateTeleportMarker()
@@ -234,9 +250,11 @@ void AVRPawn::UpdateTeleportMarker()
 			NewComponent->Mobility = EComponentMobility::Movable;
 			NewComponent->AttachToComponent(TeleportPath, FAttachmentTransformRules::KeepRelativeTransform);
 			NewComponent->SetStaticMesh(TeleportPathMesh);
-			NewComponent->RegisterComponent();
 			NewComponent->SetMaterial(0, TeleportPathMaterial);
+			NewComponent->SetMaterial(1, TeleportPathMaterial);
 			NewComponent->SetCollisionResponseToChannel(ECC_Visibility, ECR_Ignore);
+			NewComponent->SetCastShadow(false);
+			NewComponent->RegisterComponent();
 
 			TeleportPathComponents.Add(NewComponent);
 		}
@@ -245,12 +263,11 @@ void AVRPawn::UpdateTeleportMarker()
 		FSplineMeshParams SegSplineParams = FSplineMeshParams();
 		TeleportPath->GetLocalLocationAndTangentAtSplinePoint(i, SegSplineParams.StartPos, SegSplineParams.StartTangent);
 		TeleportPath->GetLocalLocationAndTangentAtSplinePoint(i + 1, SegSplineParams.EndPos, SegSplineParams.EndTangent);
-		TeleportPath->SetMaterial(0, TeleportPathMaterial);
 
 		TeleportPathComponents[i]->SetStartAndEnd(SegSplineParams.StartPos, SegSplineParams.StartTangent, SegSplineParams.EndPos, SegSplineParams.EndTangent);
 	}
 
-	if (Hit.GetActor() && Hit.GetActor()->Tags.Contains(TEXT("Floor")))
+	if (Hit.GetActor() && Hit.GetActor()->Tags.Contains(TEXT("Floor")) && FVector::DotProduct(Hit.Normal, FVector::UpVector) > 0.5)
 	{
 		FVector HitLocation = Hit.Location;
 

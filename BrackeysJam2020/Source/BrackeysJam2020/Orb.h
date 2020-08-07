@@ -42,7 +42,7 @@ private:
 
 // ----------Custom Functions----------
 public:
-	void AddImpulse();
+	void SetVelocity();
 protected:
 private:
 

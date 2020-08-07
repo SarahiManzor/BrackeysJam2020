@@ -13,7 +13,7 @@ AOrb::AOrb()
 void AOrb::BeginPlay()
 {
 	Super::BeginPlay();
-	AddImpulse();
+	SetVelocity();
 }
 
 void AOrb::Tick(float DeltaTime)
@@ -22,8 +22,8 @@ void AOrb::Tick(float DeltaTime)
 
 }
 
-void AOrb::AddImpulse()
+void AOrb::SetVelocity()
 {
-	MeshComponent->AddImpulse(InitialVelocity);
+	MeshComponent->SetPhysicsLinearVelocity(InitialVelocity);
 }
 

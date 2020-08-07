@@ -56,6 +56,8 @@ private:
 	// List of possible targets use to add aim assist
 	TArray<UStateTracker*> RewindTargets;
 
+	AActor* MagicFrame;
+
 	// State
 	bool bSelectingRewind;
 	bool bTryingGrab;
@@ -71,6 +73,8 @@ public:
 	virtual void TriggerReleased() override;
 
 	virtual void ThumbStickY(float AxisValue) override;
+
+	virtual void ThumbstickClickPressed() override;
 protected:
 private:
 	UFUNCTION()

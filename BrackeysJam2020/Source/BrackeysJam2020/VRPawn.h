@@ -103,6 +103,9 @@ private:
 	void RotateButtonPressedLeft();
 	void RotateButtonPressedRight();
 
+	void ThumbstickClickPressedLeft();
+	void ThumbstickClickPressedRight();
+
 	void UpdateTeleportMarker();
 
 	void ManageTeleport(AHandControllerBase* HandController, float AxisValue);

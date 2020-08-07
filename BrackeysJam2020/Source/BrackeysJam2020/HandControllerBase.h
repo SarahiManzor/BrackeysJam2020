@@ -51,4 +51,6 @@ public:
 	virtual void TriggerPressed();
 	virtual void TriggerReleased();
 
+	virtual void ThumbstickClickPressed();
+
 };
