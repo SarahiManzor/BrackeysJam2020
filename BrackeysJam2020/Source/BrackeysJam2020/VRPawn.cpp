@@ -119,39 +119,29 @@ void AVRPawn::GrabButtonReleasedRight()
 
 void AVRPawn::ThumbStickLeftY(float AxisValue)
 {
-	if (!LeftHandController->CanTeleport())
-	{
-		LeftHandController->ThumbStickY(AxisValue);
-		return;
-	}
-	if (AxisValue > TeleportThreshold)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Teleport Pressed Left"));
-		TeleportingHand = LeftHandController;
-		bSelectingTeleport = true;
-	}
-	else if (TeleportingHand == LeftHandController)
-	{
-		StartTeleport();
-		TeleportingHand = nullptr;
-		bSelectingTeleport = false;
-	}
+	ManageTeleport(LeftHandController, AxisValue);
 }
 
 void AVRPawn::ThumbStickRightY(float AxisValue)
 {
-	if (!RightHandController->CanTeleport())
+	ManageTeleport(RightHandController, AxisValue);
+}
+
+void AVRPawn::ManageTeleport(AHandControllerBase* HandController, float AxisValue)
+{
+	bool bIsTeleporting = TeleportingHand == HandController;
+	if (!HandController->CanTeleport() && !bIsTeleporting)
 	{
-		RightHandController->ThumbStickY(AxisValue);
+		HandController->ThumbStickY(AxisValue);
 		return;
 	}
 	if (AxisValue > TeleportThreshold)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Teleport Pressed Right"));
-		TeleportingHand = RightHandController;
+		TeleportingHand = HandController;
 		bSelectingTeleport = true;
 	}
-	else if (TeleportingHand == RightHandController)
+	else if (bIsTeleporting)
 	{
 		StartTeleport();
 		TeleportingHand = nullptr;

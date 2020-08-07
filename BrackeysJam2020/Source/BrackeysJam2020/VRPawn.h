@@ -105,6 +105,7 @@ private:
 
 	void UpdateTeleportMarker();
 
+	void ManageTeleport(AHandControllerBase* HandController, float AxisValue);
 	void StartTeleport();
 	void EndTeleport();
 

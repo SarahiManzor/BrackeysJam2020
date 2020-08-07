@@ -140,10 +140,10 @@ void AGameHandController::ThumbStickY(float AxisValue)
 		if (bInHand)
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Unhanded"));
-			bInHand = false;
 			HeldActor->SetOwner(nullptr);
 			HeldActor->AttachToComponent(nullptr, FAttachmentTransformRules::KeepWorldTransform);
 			HeldComponent->SetSimulatePhysics(true);
+			HeldActorLocation = ControllerMesh->GetComponentTransform().InverseTransformPosition(ControllerMesh->GetComponentLocation() + ControllerMesh->GetForwardVector());
 		}
 		FVector TargetWorldLocation = ControllerMesh->GetComponentTransform().TransformPosition(HeldActorLocation);
 
@@ -162,6 +162,13 @@ void AGameHandController::ThumbStickY(float AxisValue)
 
 		FVector DirControllerToComponent = ControllerMesh->GetComponentTransform().TransformPosition(HeldActorLocation) - ControllerMesh->GetComponentLocation();
 		FVector DirControllerToNewTarget = (NewLocation - ControllerMesh->GetComponentLocation()).GetSafeNormal();
+
+		if (bInHand)
+		{
+			bInHand = false;
+			DirPrevToTarget = DirPrevToTarget = ControllerMesh->GetForwardVector();
+		}
+
 		float PrevDistance = (ControllerMesh->GetComponentTransform().TransformPosition(HeldActorLocation) - ControllerMesh->GetComponentLocation()).Size();
 
 		if (!(PrevDistance < 2.0f && AxisValue <= 0.0))
@@ -202,6 +209,11 @@ void AGameHandController::OnComponentBeginOverlap(class UPrimitiveComponent* Ove
 		HeldActor = OtherActor;
 		HeldActor->SetOwner(this);
 		HeldActor->AttachToComponent(ControllerMesh, FAttachmentTransformRules::KeepWorldTransform);
+		if (HeldActor->GetName().Contains("Magic"))
+		{
+			HeldActor->SetActorLocation(ControllerMesh->GetComponentLocation());
+			HeldComponentPreviousLocation = FVector::ZeroVector;
+		}
 	}
 }
 

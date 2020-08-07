@@ -47,9 +47,12 @@ void ASwitchArea::OnComponentBeginOverlap(class UPrimitiveComponent* OverlappedC
 	if (Door != nullptr)
 	{
 		Door->Open();
-		OtherComp->SetPhysicsLinearVelocity(FVector::ZeroVector);
-		OtherComp->SetPhysicsAngularVelocityInDegrees(FVector::ZeroVector);
-		OtherActor->SetActorLocation(RelativeHoldLocation);
+		if (bHoldOnOverlap)
+		{
+			OtherComp->SetPhysicsLinearVelocity(FVector::ZeroVector);
+			OtherComp->SetPhysicsAngularVelocityInDegrees(FVector::ZeroVector);
+			OtherActor->SetActorLocation(RelativeHoldLocation);
+		}
 	}
 }
 
