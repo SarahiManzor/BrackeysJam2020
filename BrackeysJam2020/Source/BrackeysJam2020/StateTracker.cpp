@@ -1,6 +1,7 @@
 #include "StateTracker.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/StaticMeshActor.h"
+#include "Orb.h"
 
 UStateTracker::UStateTracker()
 {
@@ -77,7 +78,8 @@ void UStateTracker::Rewind()
 	}
 
 	OwnerMesh->SetEnableGravity(false);
-	OwnerMesh->SetSimulatePhysics(false);	
+	OwnerMesh->SetSimulatePhysics(false);
+	OwnerMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
 	FPointInTime LatestTime = PointsInTime[0];
 	OwnerMesh->SetWorldLocation(LatestTime.Location);
@@ -100,6 +102,13 @@ void UStateTracker::Play()
 	OwnerMesh->SetSimulatePhysics(true);
 	OwnerMesh->SetPhysicsLinearVelocity(LastLinearVelocity);
 	OwnerMesh->SetPhysicsAngularVelocityInDegrees(LastAngularVelocity);
+	OwnerMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+
+	AOrb* Orb = Cast<AOrb>(OwnerMesh->GetOwner());
+	if (Orb)
+	{
+		Orb->AddImpulse();
+	}
 }
 
 bool UStateTracker::IsRewinding()

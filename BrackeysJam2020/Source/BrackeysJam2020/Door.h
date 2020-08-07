@@ -4,19 +4,18 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "Orb.generated.h"
+#include "Door.generated.h"
 
-class UStateTracker;
 class UStaticMeshComponent;
 
 UCLASS()
-class BRACKEYSJAM2020_API AOrb : public AActor
+class BRACKEYSJAM2020_API ADoor : public AActor
 {
 	GENERATED_BODY()
 	
-		// ----------Base Functions----------
+// ----------Base Functions----------
 public:
-	AOrb();
+	ADoor();
 
 protected:
 	virtual void BeginPlay() override;
@@ -24,25 +23,30 @@ protected:
 public:
 	virtual void Tick(float DeltaTime) override;
 
-	// ----------Variables----------
+// ----------Variables----------
 public:
 protected:
 private:
 	// Config
-	UPROPERTY(EditAnywhere)
-	FVector InitialVelocity;
+
+	UPROPERTY(EditInstanceOnly)
+		FVector RelativeOpenLocation;
 
 	// Components
 	UPROPERTY(VisibleAnywhere)
 	UStaticMeshComponent* MeshComponent;
-	
+
 	// References
 
 	// State
+	FVector CloseLocation;
+
+	bool IsOpening;
 
 // ----------Custom Functions----------
 public:
-	void AddImpulse();
+	void Open();
+	void Close();
 protected:
 private:
 
