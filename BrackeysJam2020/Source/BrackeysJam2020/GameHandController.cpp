@@ -211,7 +211,7 @@ void AGameHandController::ThumbstickClickPressed()
 {
 	if (!HeldComponent && !RewindStateTracker && MagicFrame)
 	{
-		MagicFrame->SetActorLocation(ControllerMesh->GetComponentLocation());
+		MagicFrame->SetActorLocation(ControllerMesh->GetComponentLocation() + ControllerMesh->GetForwardVector() * 10.0f);
 	}
 }
 
