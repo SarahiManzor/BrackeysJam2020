@@ -99,11 +99,11 @@ void UStateTracker::Rewind()
 void UStateTracker::Play()
 {
 	bIsRecording = true;
+	OwnerMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	OwnerMesh->SetEnableGravity(bHasGravity);
 	OwnerMesh->SetSimulatePhysics(true);
 	OwnerMesh->SetPhysicsLinearVelocity(LastLinearVelocity);
 	OwnerMesh->SetPhysicsAngularVelocityInDegrees(LastAngularVelocity);
-	OwnerMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 
 	AOrb* Orb = Cast<AOrb>(OwnerMesh->GetOwner());
 	if (Orb && PointsInTime.Num() <= 5)
