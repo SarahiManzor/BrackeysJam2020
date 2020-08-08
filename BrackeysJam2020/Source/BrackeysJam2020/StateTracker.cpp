@@ -63,6 +63,7 @@ void UStateTracker::Record()
 	NewTime.Rotation = OwnerMesh->GetComponentRotation();
 	NewTime.LinearVelocity = OwnerMesh->GetPhysicsLinearVelocity();
 	NewTime.AngularVelocity = OwnerMesh->GetPhysicsAngularVelocityInDegrees();
+	UE_LOG(LogTemp, Warning, TEXT("Recorded velociity: %f"), *LastLinearVelocity.ToCompactString());
 
 	if (PointsInTime.Num() <= 0 || !PointsInTime[0].Location.Equals(NewTime.Location))
 	{
@@ -89,7 +90,7 @@ void UStateTracker::Rewind()
 	PointsInTime.RemoveAt(0);
 
 	// Todo account for frame rate
-	if (PointsInTime.Num() > 70.0 * 60.0)
+	if (PointsInTime.Num() > 70.0 * 120.0)
 	{
 		PointsInTime.RemoveAt(PointsInTime.Num() - 1);
 	}
@@ -105,7 +106,7 @@ void UStateTracker::Play()
 	OwnerMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 
 	AOrb* Orb = Cast<AOrb>(OwnerMesh->GetOwner());
-	if (Orb)
+	if (Orb && PointsInTime.Num() <= 5)
 	{
 		Orb->SetVelocity();
 	}

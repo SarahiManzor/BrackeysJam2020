@@ -80,4 +80,5 @@ private:
 	float GetFOVForCaptureComponents(const APlayerController* ForPlayerController = nullptr);
 
 	void UpdateHiddenActors();
+	void CreateRenderTargets();
 };

@@ -7,6 +7,7 @@
 #include "Door.generated.h"
 
 class UStaticMeshComponent;
+class UStateTracker;
 
 UCLASS()
 class BRACKEYSJAM2020_API ADoor : public AActor
@@ -37,6 +38,7 @@ private:
 	UStaticMeshComponent* MeshComponent;
 
 	// References
+	UStateTracker* Tracker;
 
 	// State
 	FVector CloseLocation;

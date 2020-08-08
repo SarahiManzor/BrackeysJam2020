@@ -214,7 +214,10 @@ void AVRPawn::UpdateTeleportMarker()
 	UGameplayStatics::PredictProjectilePath(this, PredictParams, Results);
 	FHitResult Hit = Results.HitResult;
 
-	UE_LOG(LogTemp, Warning, TEXT("Hit: %s"), *Hit.GetComponent()->GetName());
+	if (Hit.GetActor())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Hit: %s"), *Hit.GetComponent()->GetName());
+	}
 	if (Hit.GetActor() && Hit.GetComponent()->GetName().Contains("Picture"))
 	{
 		UE_LOG(LogTemp, Warning, TEXT("MagicTime!"));

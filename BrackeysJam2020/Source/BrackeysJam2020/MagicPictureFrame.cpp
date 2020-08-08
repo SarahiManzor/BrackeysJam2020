@@ -43,62 +43,19 @@ void AMagicPictureFrame::BeginPlay()
 
 	if (Player)
 	{
-		int32 ViewportX;
-		int32 ViewportY;
-		Player->GetViewportSize(ViewportX, ViewportY);
-
-		RenderTargetLeft = UKismetRenderingLibrary::CreateRenderTarget2D(this, ViewportX / 2.0 * 1.2, ViewportY);
-		SceneCaptureLeft->TextureTarget = RenderTargetLeft;
-		SceneCaptureLeft->HiddenActors.Add(this);
-
-		RenderTargetRight = UKismetRenderingLibrary::CreateRenderTarget2D(this, ViewportX / 2.0 * 1.2, ViewportY);
-		SceneCaptureRight->TextureTarget = RenderTargetRight;
-		SceneCaptureRight->HiddenActors.Add(this);
-
-		float FOV = GetFOVForCaptureComponents(Player);
-		SceneCaptureLeft->FOVAngle = FOV;
-		SceneCaptureRight->FOVAngle = FOV;
-
-		if (PictureMaterialLeft && PictureMaterialRight)
-		{
-			UMaterialInstanceDynamic* DynamicMaterialLeft = UMaterialInstanceDynamic::Create(PictureMaterialLeft, this);
-			DynamicMaterialLeft->SetTextureParameterValue(PictureTextureParameterName, RenderTargetLeft);
-
-			PictureMeshLeft->SetMaterial(0, DynamicMaterialLeft);
-
-			UMaterialInstanceDynamic* DynamicMaterialRight = UMaterialInstanceDynamic::Create(PictureMaterialRight, this);
-			DynamicMaterialRight->SetTextureParameterValue(PictureTextureParameterName, RenderTargetRight);
-
-			PictureMeshRight->SetMaterial(0, DynamicMaterialRight);
-
-			MIDLeft = DynamicMaterialLeft;
-			MIDRight = DynamicMaterialRight;
-		}
-
-		TArray<AActor*> FoundActors;
-		UGameplayStatics::GetAllActorsOfClass(GetWorld(), AActor::StaticClass(), FoundActors);
-		for (AActor* Actor : FoundActors)
-		{
-			if (Actor->Tags.Contains(TEXT("Past")))
-			{
-				Player->HiddenActors.Add(Actor);
-				HiddenActors.Add(Actor);
-			}
-			else if(Actor->Tags.Contains(TEXT("Present")))
-			{
-				HiddenActors.Add(Actor);
-				SceneCaptureLeft->HiddenActors.Add(Actor);
-				SceneCaptureRight->HiddenActors.Add(Actor);
-			}
-		}
-		SceneCaptureLeft->HiddenActors.Add(this);
-		SceneCaptureRight->HiddenActors.Add(this);
+		CreateRenderTargets();
 	}
 }
 
 void AMagicPictureFrame::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	if (!IsValid(SceneCaptureLeft->TextureTarget) || !IsValid(SceneCaptureLeft->TextureTarget))
+	{
+		CreateRenderTargets();
+		return;
+	}
 
 	UpdateCaptureComponent();
 	//UpdateHiddenActors();
@@ -272,4 +229,59 @@ void AMagicPictureFrame::UpdateHiddenActors()
 		Mesh->SetCollisionEnabled(Collision ? ECollisionEnabled::QueryAndPhysics : ECollisionEnabled::NoCollision);
 		//UE_LOG(LogTemp, Warning, TEXT("%s : %s"), *Actor->GetName(), Collision ? *Actor->GetName() : *GetName());
 	}
+}
+
+void AMagicPictureFrame::CreateRenderTargets()
+{
+	int32 ViewportX;
+	int32 ViewportY;
+	Player->GetViewportSize(ViewportX, ViewportY);
+
+	float ScaleForFrameRate = 1.0 / 2.0;
+	RenderTargetLeft = UKismetRenderingLibrary::CreateRenderTarget2D(Player, ViewportX / 2.0 * 1.2 * ScaleForFrameRate, ViewportY * ScaleForFrameRate);
+	SceneCaptureLeft->TextureTarget = RenderTargetLeft;
+	SceneCaptureLeft->HiddenActors.Add(this);
+
+	RenderTargetRight = UKismetRenderingLibrary::CreateRenderTarget2D(Player, ViewportX / 2.0 * 1.2 * ScaleForFrameRate, ViewportY * ScaleForFrameRate);
+	SceneCaptureRight->TextureTarget = RenderTargetRight;
+	SceneCaptureRight->HiddenActors.Add(this);
+
+	float FOV = GetFOVForCaptureComponents(Player);
+	SceneCaptureLeft->FOVAngle = FOV;
+	SceneCaptureRight->FOVAngle = FOV;
+
+	if (PictureMaterialLeft && PictureMaterialRight)
+	{
+		UMaterialInstanceDynamic* DynamicMaterialLeft = UMaterialInstanceDynamic::Create(PictureMaterialLeft, this);
+		DynamicMaterialLeft->SetTextureParameterValue(PictureTextureParameterName, RenderTargetLeft);
+
+		PictureMeshLeft->SetMaterial(0, DynamicMaterialLeft);
+
+		UMaterialInstanceDynamic* DynamicMaterialRight = UMaterialInstanceDynamic::Create(PictureMaterialRight, this);
+		DynamicMaterialRight->SetTextureParameterValue(PictureTextureParameterName, RenderTargetRight);
+
+		PictureMeshRight->SetMaterial(0, DynamicMaterialRight);
+
+		MIDLeft = DynamicMaterialLeft;
+		MIDRight = DynamicMaterialRight;
+	}
+
+	TArray<AActor*> FoundActors;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AActor::StaticClass(), FoundActors);
+	for (AActor* Actor : FoundActors)
+	{
+		if (Actor->Tags.Contains(TEXT("Past")))
+		{
+			Player->HiddenActors.Add(Actor);
+			HiddenActors.Add(Actor);
+		}
+		else if (Actor->Tags.Contains(TEXT("Present")))
+		{
+			HiddenActors.Add(Actor);
+			SceneCaptureLeft->HiddenActors.Add(Actor);
+			SceneCaptureRight->HiddenActors.Add(Actor);
+		}
+	}
+	SceneCaptureLeft->HiddenActors.Add(this);
+	SceneCaptureRight->HiddenActors.Add(this);
 }
